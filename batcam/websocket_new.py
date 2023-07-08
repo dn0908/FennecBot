@@ -5,6 +5,9 @@ import threading
 import wave
 import time
 
+import base64
+
+
 USER = "user"
 PASSWORD = "user"
 BATCAM_IP = "192.168.1.3"
@@ -23,16 +26,18 @@ def save_wav(timestamp, audio_data):
 def on_message(ws, message):
     global trigger_id
     data = json.loads(message)
-    if data.get("event_id") == 2:
+    if data.get("event_id") == 3:
         timestamp = data["timestamp"]
-        audio_data = data["ws"] # For websocket audio (ID:2)
+        audio_data = data["1_point_0"] # For websocket audio (ID:2)
         save_wav(timestamp, audio_data)
-        # Record 5 seconds of audio
-        time.sleep(5)
-        # Unsubscribe and close the connection
-        unsubscribe_msg = json.dumps({"type": "unsubscribe", "id": trigger_id})
-        ws.send(unsubscribe_msg)
-        ws.close()
+        print('wav saved')
+
+        # # Record 5 seconds of audio
+        # time.sleep(5)
+        # # Unsubscribe and close the connection
+        # unsubscribe_msg = json.dumps({"type": "unsubscribe", "id": trigger_id})
+        # ws.send(unsubscribe_msg)
+        # ws.close()
     print(data)
     # Save data to file
     with open("data.txt", "a") as f:
@@ -55,7 +60,7 @@ def on_close(ws):
 
 def on_open(ws):
     def run(*args):
-        trigger_id = 2
+        trigger_id = 3 # for 1 point audio
         subscribe_msg = json.dumps({"type": "subscribe", "id": trigger_id})
         ws.send(subscribe_msg)
         while True:
@@ -73,7 +78,7 @@ if __name__ == "__main__":
     ws = websocket.WebSocketApp(f"ws://{BATCAM_IP}/ws",
                                 on_message=on_message,
                                 on_error=on_error,
-                                on_close=on_close
+                                on_close=on_close,
                                 subprotocols=["subscribe"],
                                 header={"Authorization": f"Basic %s" % base64EncodedAuth}
                             )
