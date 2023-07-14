@@ -7,7 +7,8 @@ logging.basicConfig(level=logging.INFO)
 #RTSP_URL = "rtsp://<username>:<password>@<ip>/axis-media/media.amp"
 # RTSP_URL = "rtsp://user:user@192.168.0.1:8554/raw"
 # RTSP_URL = "rtsp://user:user@127.0.0.53:8554/raw"
-RTSP_URL = "rtsp://user:user@169.254.77.125:8554/raw"
+BATCAM_IP = "192.168.1.3"
+RTSP_URL = "rtsp://user:user@192.168.1.3:8554/raw"
 
 def rtsp_to_opencv(url):
     logging.info(f' Try to connect to {url}')
