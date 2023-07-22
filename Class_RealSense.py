@@ -3,7 +3,7 @@ import json
 import numpy as np
 import pyrealsense2 as rs 
 import pyzbar.pyzbar as pyzbar
-from ar_markers import detect_markers
+# from ar_markers import detect_markers
 
 
 class RealSense:
@@ -30,32 +30,32 @@ class RealSense:
         self.error_sum = 0 
         self.error_prev = 0
 
-    def detect_ARmarker(self, image):
-        # (TaskA, 114) (TaskB, 1156) (TaskC, 116) (TaskD, 117) (TaskE, 118)
-        marker_arr = [114, 1156, 116, 117, 118]
-        markers = detect_markers(image)
+    # def detect_ARmarker(self, image):
+    #     # (TaskA, 114) (TaskB, 1156) (TaskC, 116) (TaskD, 117) (TaskE, 118)
+    #     marker_arr = [114, 1156, 116, 117, 118]
+    #     markers = detect_markers(image)
 
-        for marker in markers:
-            marker.highlite_marker(image)
-            print("marker ID:  ", marker.id)
-            if marker.id == marker_arr[0]: 
-                print('Task A ARMARKER_DETECTED   ID: {}'.format(marker.id))
-                self.flag = 'TaskA'
-            elif marker.id == marker_arr[1]: 
-                print('Task B ARMARKER_DETECTED   ID: {}'.format(marker.id))
-                self.flag = 'TaskB'
-            elif marker.id == marker_arr[2]: 
-                print('Task C ARMARKER_DETECTED   ID: {}'.format(marker.id))
-                self.flag = 'TaskC'
-            elif marker.id == marker_arr[3]:
-                print('Task D ARMARKER_DETECTED   ID: {}'.format(marker.id))
-                self.flag = 'TaskD'
-            elif marker.id == marker_arr[4]:
-                print('Task E ARMARKER_DETECTED   ID: {}'.format(marker.id))
-                self.flag = 'TaskE'
-            else:
-                print('Detected marker. But NOT IN OUR TASK')
-                self.flag = 'None'
+    #     for marker in markers:
+    #         marker.highlite_marker(image)
+    #         print("marker ID:  ", marker.id)
+    #         if marker.id == marker_arr[0]: 
+    #             print('Task A ARMARKER_DETECTED   ID: {}'.format(marker.id))
+    #             self.flag = 'TaskA'
+    #         elif marker.id == marker_arr[1]: 
+    #             print('Task B ARMARKER_DETECTED   ID: {}'.format(marker.id))
+    #             self.flag = 'TaskB'
+    #         elif marker.id == marker_arr[2]: 
+    #             print('Task C ARMARKER_DETECTED   ID: {}'.format(marker.id))
+    #             self.flag = 'TaskC'
+    #         elif marker.id == marker_arr[3]:
+    #             print('Task D ARMARKER_DETECTED   ID: {}'.format(marker.id))
+    #             self.flag = 'TaskD'
+    #         elif marker.id == marker_arr[4]:
+    #             print('Task E ARMARKER_DETECTED   ID: {}'.format(marker.id))
+    #             self.flag = 'TaskE'
+    #         else:
+    #             print('Detected marker. But NOT IN OUR TASK')
+    #             self.flag = 'None'
 
     def read_QRcodes(self, frame):
         codes = pyzbar.decode(frame)
@@ -109,13 +109,6 @@ class RealSense:
             print('Robot stop! No contours found')
 
         return linear_velocity, angular_velocity
-
-    def write_datalog(self, info : str):
-        with open("barcode_result.txt", mode ='w') as file:
-            file.write("Recognized Barcode:" + info)
-    
-    def json_parser(self, info : str):
-        splitData : list= info.split(";")
 
 
 # if __name__=="__main__":
