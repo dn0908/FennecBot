@@ -10,7 +10,7 @@ logging.basicConfig(level=logging.INFO)
 class BatCam:
     def __init__(self):
         # BATCAM RTSP_URL = "rtsp://<username>:<password>@<ip>:8544/raw
-        self.RTSP_URL = "rtsp://admin:admin@192.168.1.3:8554/raw"
+        self.RTSP_URL = "rtsp://admin:admin@{BATCAM_IP}:8554/raw"
         # Load the "custom" YOLOv5 model
         self.model = torch.hub.load('./temp_object_detection/yolov5', 'custom', path='./temp_object_detection/yolov5/runs/train/exp2/weights/best.pt', source='local')
         self.x1, self.y1, self.x2, self.y2 = 0, 0, 0, 0
@@ -59,9 +59,25 @@ class BatCam:
 
         return x1, y1, x2, y2 #change to self
     
-    def show_BF(self):
+    # def show_BF(self):
+    #     ws = websocket.WebSocketApp(
+    #         f"ws://{BATCAM_IP}:80/ws",
+    #         on_open=on_open,
+    #         on_message=on_message,
+    #         on_error=on_error,
+    #         on_close=on_close,
+    #         subprotocols=["subscribe"],
+    #         header={"Authorization": f"Basic %s" % base64EncodedAuth}
+    #     )
+    #     ws.run_forever(dispatcher=rel, reconnect=5)
+    #     rel.signal(2, rel.abort)
+    #     rel.dispatch()
+
+    #     return ws
+
+    def save_BF(self):
         ws = websocket.WebSocketApp(
-            f"ws://{CAMERA_IP}:80/ws",
+            f"ws://{BATCAM_IP}:80/ws",
             on_open=on_open,
             on_message=on_message,
             on_error=on_error,
@@ -93,7 +109,7 @@ class BatCam:
             if yolo_toggle != 0:
                 self.x1, self.y1, self.x2, self.y2 = self.yolo_detection(frame)
             if BF_toggle != 0:
-                self.BF_data = self.show_BF()
+                self.BF_data = self.save_BF()
                 
                 
             cv2.imshow('test',frame)
@@ -110,7 +126,7 @@ class BatcamNoise:
     def Batcam_BF(self, toggle=0):
         if toggle == 1:
             ws = websocket.WebSocketApp(
-                f"ws://{CAMERA_IP}:80/ws",
+                f"ws://{BATCAM_IP}:80/ws",
                 on_open=on_open,
                 on_message=on_message,
                 on_error=on_error,

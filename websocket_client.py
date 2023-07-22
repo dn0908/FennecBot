@@ -1,71 +1,78 @@
-# Use code blocks to display formatted content such as code
-import base64
-import json
-import rel
 import websocket
-from interpolator import interpolate, plt_result
+import json
+import threading
+
+import wave
+import time
+
+
+import base64
+# Use code blocks to display formatted content such as code
+import rel
 import pickle
 import pandas as pd
-
 import csv
+import numpy as np
 
-# Define some constants
 USER = "user"
 PASSWORD = "user"
-CAMERA_IP = "192.168.2.2"
+BATCAM_IP = "192.168.2.2"
+credential = f"{USER}:{PASSWORD}"
+base64EncodedAuth = base64.b64encode(credential.encode()).decode()
 
-# Create a file object to write the data
-data_file = open("data.pkl", "wb")
+trigger_id = None
+count_num = 0
 
 data_list = []
 
-# Create a csv writer object to write the csv file
-csv_file = open("data.csv", "w")
-csv_writer = csv.writer(csv_file)
+# def save_wav(timestamp, audio_data):
+#     audio_data = np.asarray(audio_data)
+#     # 60 * 64 크기의 frame에서 각 포인트별 음성 데이터 추출
+#     frame = np.random.rand(60 * 64)
 
-count_num = 0
+#     # wave 파일 생성
+#     with wave.open(f"{timestamp}.wav", 'w') as wav:
+#         # 채널 수, 샘플 폭, 샘플링 빈도 설정
+#         wav.setparams((1, 2, 96000, 60 * 64, 'NONE', 'not compressed'))
+#         # 60개의 frame에서 각 포인트별 음성 데이터 추출 후 wav 파일에 쓰기
+#         for i in range(60):
+#             audio_data = frame[i * 64:(i + 1) * 64]
+#             wav.writeframes(audio_data)
 
+def save_csv(timestamp, audio_data):
+    # Create a csv writer object to write the csv file
+    filename = f"{timestamp}.csv"
+    csv_file = open(filename, "w")
+    csv_writer = csv.writer(csv_file)
+    df = pd.DataFrame(data_list)
+    df.to_csv(filename, index = False)
 
 def on_message(_, message):
+    global trigger_id
     global count_num
-    # Parse the message as a JSON object
-    dict_ = json.loads(message)
-    gain = dict_["gain"]
-    bf_data = list(dict_["bf"])
-
-    # Interpolate and plot the data
-    cvted_data = interpolate(bf_data, gain, 3)
-    plt_result(cvted_data)
-
-    # Write the data to the pickle file
-    #pickle.dump(cvted_data, data_file)
-    # Write the data to the csv file
-    #csv_writer.writerow(cvted_data)
     
+    data_= json.loads(message)
+    timestamp = data_["timestamp"]
+    l_point_0 = list(data_["l_point_0"])
+    # l_point_1 = list(data_["l_point_1"])
+
+
     count_num += 1
-    print(count_num)
-    
-    if count_num >= 10 and count_num < 20:
-        cvted_data = cvted_data.reshape(-1)
-        print(cvted_data.shape)
-        data_list.append(cvted_data)
-    	
-    if count_num == 20:
-        df = pd.DataFrame(data_list)
-        file_name = f'data.csv'
-        df.to_csv(file_name, index = False)
-        print(f"Saved {file_name}")
-        count_num = 0
-        print("count num to zero")
+    print("count num : ",count_num)
 
-    
-    #for i in range (0, n_rows, time_step):
-        #chunk = df.iloc[i:i+time_step]
-        #file_name = f"data_{i}.csv"
-        #chunk.to_csv(file_name, index = False)
-        # print a message to confirm saving
-        #print(f"Saved {file_name}")
+    if count_num >= 16 and count_num < 32:
+        data_list.append(l_point_0)
 
+    if count_num == 32:
+        # save_wav(timestamp, data_list)
+        df = pd.DataFrame(data_list, index=None, columns=None)
+        save_csv(timestamp, df)
+        print(np.asarray(data_list).shape)
+        print('csv saved')
+        # # Unsubscribe and close the connection
+        # unsubscribe_msg = json.dumps({"type": "unsubscribe", "id": trigger_id})
+        # ws.send(unsubscribe_msg)
+        # ws.close()
 
 def on_error(_, error):
     print(error)
@@ -73,28 +80,33 @@ def on_error(_, error):
 def on_close(_, close_status_code, close_msg):
     print("### closed ###")
     # Close the files after the websocket is closed
-    data_file.close()
-    csv_file.close()
+
+'''
+|  EVENT ID  |      DATA      |                   json form                     |
+---------------------------------------------------------------------------------
+|     0      |   beamforming  |          event_id, bf, gain, timestamp          |
+|     1      |     decibel    |           event_id, timestamp, decibel          |
+|     2      |    ws audio    |          timestamp, event_id, gain, ws          |
+|     3      |  1 point audio | timestamp, event_id, gain, 1_point_0, 1_point_1 |
+'''
 
 def on_open(socket):
     print("Opened connection")
-    message = '{"type" : "subscribe", "id" : 0}'
+    message = '{"type" : "subscribe", "id" : 3}'
     socket.send(message)
     print("Message sent")
 
 if __name__ == "__main__":
-    # Create a websocket object with authentication and callbacks
     count_num = 0
-    ws = websocket.WebSocketApp(
-        f"ws://{CAMERA_IP}:80/ws",
-        on_open=on_open,
-        on_message=on_message,
-        on_error=on_error,
-        on_close=on_close,
-        subprotocols=["subscribe"],
-        header={"Authorization": f"Basic %s" % base64.b64encode(f"{USER}:{PASSWORD}".encode()).decode()}
-    )
-    # Run the websocket until interrupted
+    print(count_num)
+    ws = websocket.WebSocketApp(f"ws://{BATCAM_IP}/ws",
+                                on_open=on_open,
+                                on_message=on_message,
+                                on_error=on_error,
+                                on_close=on_close,
+                                subprotocols=["subscribe"],
+                                header={"Authorization": f"Basic %s" % base64EncodedAuth}
+                            )
     ws.run_forever(dispatcher=rel, reconnect=5)
     rel.signal(2, rel.abort)
     rel.dispatch()
