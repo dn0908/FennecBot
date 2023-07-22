@@ -89,6 +89,7 @@ class MainController:
                     # self.Batcam.rtsp_to_opencv(BF_toggle=1)
                     
                     # Save data from self.Batcam.BF_data
+                    # self.Batcam.save_BF(BF_toggle=1)
                     
                     Task = 0
                     self.Task = 'B'
@@ -112,6 +113,7 @@ class MainController:
                     # self.Batcam.rtsp_to_opencv(BF_toggle=1)
 
                     # Save data from self.Batcam.BF_data
+                    # self.Batcam.save_BF(BF_toggle=1)
                     
                     Task = 0
                     self.Task = 'C'
@@ -136,6 +138,7 @@ class MainController:
                     self.Batcam.rtsp_to_opencv(BF_toggle=1)
 
                     # Save data from self.Batcam.BF_data
+                    # self.Batcam.save_BF(BF_toggle=1)
                     
                     Task = 0
                     self.Task = 'D'
@@ -167,6 +170,7 @@ class MainController:
                         self.Batcam.rtsp_to_opencv(BF_toggle=1)
                         
                         # Save data from self.Batcam.BF_data
+                        # self.Batcam.save_BF(BF_toggle=1)
                     
                     Task = 0
                     self.Task = 'E'
@@ -184,7 +188,7 @@ class MainController:
                     
 
 
-                pass
+                    pass
 
 
             cv2.imshow('RealSense', mask)
