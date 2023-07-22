@@ -12,7 +12,7 @@ import csv
 # Define some constants
 USER = "user"
 PASSWORD = "user"
-CAMERA_IP = "192.168.1.3"
+CAMERA_IP = "192.168.2.2"
 
 # Create a file object to write the data
 data_file = open("data.pkl", "wb")
@@ -46,9 +46,9 @@ def on_message(_, message):
     print(count_num)
     
     if count_num >= 10 and count_num < 20:
-    	cvted_data = cvted_data.reshape(-1)
-    	print(cvted_data.shape)
-    	data_list.append(cvted_data)
+        cvted_data = cvted_data.reshape(-1)
+        print(cvted_data.shape)
+        data_list.append(cvted_data)
     	
     if count_num == 20:
         df = pd.DataFrame(data_list)
