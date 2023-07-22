@@ -74,25 +74,6 @@ def on_message(_, message):
         ws.send(unsubscribe_msg)
         ws.close()
 
-
-    # if data.get("event_id") == 3:
-    #     timestamp = data["timestamp"]
-    #     audio_data = data["1_point_0"] # For websocket audio (ID:2)
-    #     time.sleep(5)
-    #     save_wav(timestamp, audio_data)
-    #     print('wav saved')
-
-        # # Record 5 seconds of audio
-        # time.sleep(5)
-        # # Unsubscribe and close the connection
-        # unsubscribe_msg = json.dumps({"type": "unsubscribe", "id": trigger_id})
-        # ws.send(unsubscribe_msg)
-        # ws.close()
-    # print(data)
-    # Save data to file
-    # with open("data.txt", "a") as f:
-    #     f.write(json.dumps(data) + "\n")
-
 def on_error(_, error):
     print(error)
 
