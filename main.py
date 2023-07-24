@@ -1,10 +1,10 @@
 # # For us, For every boot
 # rosrun scout_bringup bringup_can2usb.bash
 
-# # check CAN comm
+# # CHECK CAN comm
 # candump can0
 
-# dynamicel ttyUSB0 allow
+# # TO ALLOW DYNAMIXEL port ttyUSB0
 # sudo chmod 666 /dev/ttyUSB0
 
 from Class_RealSense import *

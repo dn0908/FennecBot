@@ -27,17 +27,15 @@ data_list = []
 
 # def save_wav(timestamp, audio_data):
 #     audio_data = np.asarray(audio_data)
-#     # 60 * 64 크기의 frame에서 각 포인트별 음성 데이터 추출
-#     frame = np.random.rand(60 * 64)
+#     audio_data = audio_data.reshape(-1)
 
 #     # wave 파일 생성
 #     with wave.open(f"{timestamp}.wav", 'w') as wav:
-#         # 채널 수, 샘플 폭, 샘플링 빈도 설정
-#         wav.setparams((1, 2, 96000, 60 * 64, 'NONE', 'not compressed'))
-#         # 60개의 frame에서 각 포인트별 음성 데이터 추출 후 wav 파일에 쓰기
-#         for i in range(60):
-#             audio_data = frame[i * 64:(i + 1) * 64]
-#             wav.writeframes(audio_data)
+#         wav.setnchannels(1)
+#         wav.setsampwidth(2)
+#         wav.setframerate(sample_rate)
+#         wav.writeframes(audio_data.astype(np.int16))
+
 
 def save_csv(timestamp, audio_data):
     # Create a csv writer object to write the csv file
