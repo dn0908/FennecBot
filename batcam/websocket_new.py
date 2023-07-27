@@ -77,7 +77,7 @@ def on_message(_, message):
         unsubscribe_msg = json.dumps({"type": "unsubscribe", "id": trigger_id})
         ws.send(unsubscribe_msg)
         ws.close()
-        save_num = 1
+        # save_num = 1
 
 def on_error(_, error):
     print(error)
@@ -118,12 +118,12 @@ if __name__ == "__main__":
     # ws.close()
     ws.run_forever(dispatcher=rel, reconnect=5)
     rel.signal(2, rel.abort)
-    rel.dispatch()
-    if save_num == 1:
-        # Unsubscribe and close the connection
-        unsubscribe_msg = json.dumps({"type": "unsubscribe", "id": trigger_id})
-        ws.send(unsubscribe_msg)
-        ws.close()
+    rel.dispatch()  
+    # if save_num == 1:
+    #     # Unsubscribe and close the connection
+    #     unsubscribe_msg = json.dumps({"type": "unsubscribe", "id": trigger_id})
+    #     ws.send(unsubscribe_msg)
+    #     ws.close()
     # ws.run_forever(dispatcher=rel, reconnect=5)
     # rel.signal(2, rel.abort)
     # rel.dispatch()
