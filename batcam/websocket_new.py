@@ -25,16 +25,16 @@ count_num = 0
 
 data_list = []
 
-def save_wav(timestamp, audio_data):
-    audio_data = np.asarray(audio_data)
-    audio_data = audio_data.reshape(-1)
+# def save_wav(timestamp, audio_data):
+#     audio_data = np.asarray(audio_data)
+#     audio_data = audio_data.reshape(-1)
 
-    # wave 파일 생성
-    with wave.open(f"{timestamp}.wav", 'w') as wav:
-        wav.setnchannels(1)
-        wav.setsampwidth(2)
-        wav.setframerate(sample_rate)
-        wav.writeframes(audio_data.astype(np.int16))
+#     # wave 파일 생성
+#     with wave.open(f"{timestamp}.wav", 'w') as wav:
+#         wav.setnchannels(1)
+#         wav.setsampwidth(2)
+#         wav.setframerate(sample_rate)
+#         wav.writeframes(audio_data.astype(np.int16))
 
 
 def save_csv(timestamp, audio_data):
@@ -64,11 +64,11 @@ def on_message(_, message):
     if count_num == 32:
         df = pd.DataFrame(data_list, index=None, columns=None)
 
-        save_csv(timestamp, df)
+        save_csv('l_point_data', df)
         print('csv saved')
 
-        save_wav(timestamp, data_list)
-        print('wav saved')
+        # save_wav('l_point_data', data_list)
+        # print('wav saved')
         
         # Unsubscribe and close the connection
         unsubscribe_msg = json.dumps({"type": "unsubscribe", "id": trigger_id})
