@@ -4,14 +4,34 @@ import numpy as np
 from batcam.websocket_new import *
 import torch
 import pyzbar.pyzbar as pyzbar
-from tensorflow import keras
-import librosa
+# from tensorflow import keras
+# import librosa
+
+
+import websocket
+import json
+import threading
+
+import wave
+import time
+
+
+import base64
+# Use code blocks to display formatted content such as code
+import rel
+import pickle
+import pandas as pd
+import csv
+import numpy as np
+
+
 
 logging.basicConfig(level=logging.INFO)
 
 class BatCam:
     def __init__(self):
         # BATCAM RTSP_URL = "rtsp://<username>:<password>@<ip>:8544/raw
+        BATCAM_IP = '192.168.2.2'
         self.RTSP_URL = "rtsp://admin:admin@{BATCAM_IP}:8554/raw"
         # Load the "custom" YOLOv5 model
         # self.model = torch.hub.load('./temp_object_detection/yolov5', 'custom', path='./temp_object_detection/yolov5/runs/train/exp2/weights/best.pt', source='local')
@@ -23,7 +43,7 @@ class BatCam:
         # self.on_message = []
 
         # Noise Model
-        self.noise_model = keras.models.load_model('./models/model.h5')
+        # self.noise_model = keras.models.load_model('./models/model.h5')
         self.sr = 96000
         self.window_size_sec = 0.05  # Window size in seconds
         self.window_size = int(self.window_size_sec / (512 / self.sr))
@@ -71,16 +91,26 @@ class BatCam:
     #     return x1, y1, x2, y2 #change to self
 
     def save_BF(self):
-        ws = websocket.WebSocketApp(
-            f"ws://{BATCAM_IP}:80/ws",
-            on_open=on_open,
-            on_message=on_message,
-            on_error=on_error,
-            on_close=on_close,
-            subprotocols=["subscribe"],
-            header={"Authorization": f"Basic %s" % base64EncodedAuth}
-        )
+        USER = "user"
+        PASSWORD = "user"
+        BATCAM_IP = "192.168.2.2"
+        credential = f"{USER}:{PASSWORD}"
+        base64EncodedAuth = base64.b64encode(credential.encode()).decode()
+        trigger_id = None
+        count_num = 0
+
+        data_list = []
+
+        ws = websocket.WebSocketApp(f"ws://{BATCAM_IP}/ws",
+                                on_open=on_open,
+                                on_message=on_message,
+                                on_error=on_error,
+                                on_close=on_close,
+                                subprotocols=["subscribe"],
+                                header={"Authorization": f"Basic %s" % base64EncodedAuth}
+                            )
         time.sleep(2)
+        print('time passed')
         ws.close()
         # ws.run_forever(dispatcher=rel, reconnect=5)
         # rel.signal(2, rel.abort)
@@ -88,59 +118,59 @@ class BatCam:
 
         return ws
     
-    def leakage_detection(self):
-        def extract_features_v4(file_path, window_size, stride):
-            data = pd.read_csv(file_path)
-            audio = data.values.reshape(-1)
+    # def leakage_detection(self):
+    #     def extract_features_v4(file_path, window_size, stride):
+    #         data = pd.read_csv(file_path)
+    #         audio = data.values.reshape(-1)
 
-            # Perform STFT on the entire audio
-            stft = librosa.stft(audio, n_fft=2048, hop_length=512)
-            print("stft size: ", stft.shape)
+    #         # Perform STFT on the entire audio
+    #         stft = librosa.stft(audio, n_fft=2048, hop_length=512)
+    #         print("stft size: ", stft.shape)
 
-            # Calculate the number of time steps
-            num_time_steps = stft.shape[1]
+    #         # Calculate the number of time steps
+    #         num_time_steps = stft.shape[1]
 
-            features = []
-            for i in range(0, num_time_steps, stride):
-                # Determine the start and end indices for the window
-                time_start = i
-                time_end = i + window_size
+    #         features = []
+    #         for i in range(0, num_time_steps, stride):
+    #             # Determine the start and end indices for the window
+    #             time_start = i
+    #             time_end = i + window_size
 
-                # Check if the window exceeds the audio signal length
-                if time_end > num_time_steps:
-                    break
+    #             # Check if the window exceeds the audio signal length
+    #             if time_end > num_time_steps:
+    #                 break
 
-                # Extract features for each time step
-                stft_window = stft[:, time_start:time_end]
+    #             # Extract features for each time step
+    #             stft_window = stft[:, time_start:time_end]
 
-                # Transpose the features to have time as the first axis
-                stft_window = np.transpose(stft_window)
+    #             # Transpose the features to have time as the first axis
+    #             stft_window = np.transpose(stft_window)
 
-                # Append the features to the list
-                features.append(stft_window)
+    #             # Append the features to the list
+    #             features.append(stft_window)
 
-            return features
-        X_train = []
-        file_path = 'l_point_data.csv'
-        class_features = extract_features_v4(file_path, self.window_size, self.stride)
-        X_train.extend(class_features)
-        X_train = np.array(X_train)
-        print('Noise Input Data Shape : ',X_train.shape)
+    #         return features
+    #     X_train = []
+    #     file_path = 'l_point_data.csv'
+    #     class_features = extract_features_v4(file_path, self.window_size, self.stride)
+    #     X_train.extend(class_features)
+    #     X_train = np.array(X_train)
+    #     print('Noise Input Data Shape : ',X_train.shape)
 
-        y_pred_prob = self.noise_model.predict(X_train)
-        y_pred = np.argmax(y_pred_prob, axis=1)
-        print('Predicted Noise Class : ', y_pred)
-        y_pred_mean = np.mean(y_pred)
-        print('Predicted Noise Class MEAN : ', y_pred_mean)
+    #     y_pred_prob = self.noise_model.predict(X_train)
+    #     y_pred = np.argmax(y_pred_prob, axis=1)
+    #     print('Predicted Noise Class : ', y_pred)
+    #     y_pred_mean = np.mean(y_pred)
+    #     print('Predicted Noise Class MEAN : ', y_pred_mean)
 
-        if y_pred_mean >= 0.5 :      # if detected, self.noise_detection changes to 1
-            print(' ! Leakage Detected ! ')
-            self.noise_detection = 1
-        else :                       # if not, self.noise_detection remains 0
-            print('NO Leakage Detected')
-            self.noise_detection = 0
+    #     if y_pred_mean >= 0.5 :      # if detected, self.noise_detection changes to 1
+    #         print(' ! Leakage Detected ! ')
+    #         self.noise_detection = 1
+    #     else :                       # if not, self.noise_detection remains 0
+    #         print('NO Leakage Detected')
+    #         self.noise_detection = 0
         
-        return self.noise_detection  # return self.noise_detection
+    #     return self.noise_detection  # return self.noise_detection
 
 
     def rtsp_to_opencv(self, QR_toggle = 0, yolo_toggle = 0, BF_toggle = 0):
@@ -194,7 +224,7 @@ class BatCam:
 if __name__ == "__main__":
     Batcam = BatCam()
     Batcam.save_BF()
-    Batcam.leakage_detection()
+    # Batcam.leakage_detection()
     # try:
     #     Batcam.rtsp_to_opencv(QR_toggle = 0, yolo_toggle=0, BF_toggle=0)
     # except Exception as error:

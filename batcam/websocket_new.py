@@ -22,6 +22,7 @@ base64EncodedAuth = base64.b64encode(credential.encode()).decode()
 
 trigger_id = None
 count_num = 0
+save_num = 0
 
 data_list = []
 
@@ -48,6 +49,7 @@ def save_csv(timestamp, audio_data):
 def on_message(_, message):
     global trigger_id
     global count_num
+    global save_num
     
     data_= json.loads(message)
     timestamp = data_["timestamp"]
@@ -70,10 +72,12 @@ def on_message(_, message):
         # save_wav('l_point_data', data_list)
         # print('wav saved')
         
+
         # Unsubscribe and close the connection
         unsubscribe_msg = json.dumps({"type": "unsubscribe", "id": trigger_id})
         ws.send(unsubscribe_msg)
         ws.close()
+        save_num = 1
 
 def on_error(_, error):
     print(error)
@@ -99,6 +103,7 @@ def on_open(socket):
 
 if __name__ == "__main__":
     count_num = 0
+    save_num = 0
     print(count_num)
     ws = websocket.WebSocketApp(f"ws://{BATCAM_IP}/ws",
                                 on_open=on_open,
@@ -108,6 +113,18 @@ if __name__ == "__main__":
                                 subprotocols=["subscribe"],
                                 header={"Authorization": f"Basic %s" % base64EncodedAuth}
                             )
+    # time.sleep(10)
+    # print('time passed')
+    # ws.close()
     ws.run_forever(dispatcher=rel, reconnect=5)
     rel.signal(2, rel.abort)
     rel.dispatch()
+    if save_num == 1:
+        # Unsubscribe and close the connection
+        unsubscribe_msg = json.dumps({"type": "unsubscribe", "id": trigger_id})
+        ws.send(unsubscribe_msg)
+        ws.close()
+    # ws.run_forever(dispatcher=rel, reconnect=5)
+    # rel.signal(2, rel.abort)
+    # rel.dispatch()
+    # ws.close()
