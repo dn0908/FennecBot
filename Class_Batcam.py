@@ -5,6 +5,7 @@ from batcam.websocket_new import *
 import torch
 import pyzbar.pyzbar as pyzbar
 from tensorflow import keras
+import librosa
 
 logging.basicConfig(level=logging.INFO)
 
@@ -193,7 +194,7 @@ class BatCam:
 if __name__ == "__main__":
     Batcam = BatCam()
     Batcam.save_BF()
-    Batcam.noise_detection()
+    Batcam.leakage_detection()
     # try:
     #     Batcam.rtsp_to_opencv(QR_toggle = 0, yolo_toggle=0, BF_toggle=0)
     # except Exception as error:
