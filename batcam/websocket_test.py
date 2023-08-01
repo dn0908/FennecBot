@@ -5,7 +5,6 @@ import threading
 import wave
 import time
 
-
 import base64
 # Use code blocks to display formatted content such as code
 import rel
@@ -26,6 +25,11 @@ save_num = 0
 
 data_list = []
 
+
+# Create threading event when to close connection
+exit_event = threading.Event()
+
+
 def save_csv(timestamp, audio_data):
     # Create a csv writer object to write the csv file
     filename = f"{timestamp}.csv"
@@ -44,7 +48,6 @@ def on_message(_, message):
     l_point_0 = list(data_["l_point_0"])
     # l_point_1 = list(data_["l_point_1"])
 
-
     count_num += 1
     print("count num : ",count_num)
 
@@ -53,26 +56,16 @@ def on_message(_, message):
 
     if count_num == 32:
         df = pd.DataFrame(data_list, index=None, columns=None)
-
         save_csv('l_point_data', df)
         print('csv saved')
-
-        # save_wav('l_point_data', data_list)
-        # print('wav saved')
-        
-
-        # Unsubscribe and close the connection
-        unsubscribe_msg = json.dumps({"type": "unsubscribe", "id": trigger_id})
-        ws.send(unsubscribe_msg)
-        ws.close()
-        # save_num = 1
 
 def on_error(_, error):
     print(error)
 
 def on_close(_, close_status_code, close_msg):
     print("### closed ###")
-    # Close the files after the websocket is closed
+    # Set exit_event to signal closed
+    exit_event.set()
 
 '''
 |  EVENT ID  |      DATA      |                   json form                     |
@@ -89,10 +82,8 @@ def on_open(socket):
     socket.send(message)
     print("Message sent")
 
-if __name__ == "__main__":
-    count_num = 0
-    save_num = 0
-    print(count_num)
+def websocket_thread():
+    # Create a new WebSocket connection
     ws = websocket.WebSocketApp(f"ws://{BATCAM_IP}/ws",
                                 on_open=on_open,
                                 on_message=on_message,
@@ -101,18 +92,21 @@ if __name__ == "__main__":
                                 subprotocols=["subscribe"],
                                 header={"Authorization": f"Basic %s" % base64EncodedAuth}
                             )
-    # time.sleep(10)
-    # print('time passed')
-    # ws.close()
-    ws.run_forever(dispatcher=rel, reconnect=5)
-    rel.signal(2, rel.abort)
-    rel.dispatch()  
-    # if save_num == 1:
-    #     # Unsubscribe and close the connection
-    #     unsubscribe_msg = json.dumps({"type": "unsubscribe", "id": trigger_id})
-    #     ws.send(unsubscribe_msg)
-    #     ws.close()
-    # ws.run_forever(dispatcher=rel, reconnect=5)
-    # rel.signal(2, rel.abort)
-    # rel.dispatch()
-    # ws.close()
+    # Run the WebSocket connection until the exit_event is set
+    ws.run_forever(dispatcher=rel, ping_interval=5, ping_timeout=2, close_timeout=1, http_proxy_host=None, http_proxy_port=None, sslopt=None, suppress_origin=False, ping_payload=b'ping')
+
+
+
+# Start the WebSocket connection in a new thread
+websocket_thread = threading.Thread(target=websocket_thread)
+websocket_thread.start()
+
+# Continue with other parts of the code...
+
+# Wait for the WebSocket connection to finish (i.e., when the exit_event is set)
+websocket_thread.join()
+
+# Now that the WebSocket connection is closed, you can save the CSV file
+# Assuming you have the necessary data_list and timestamp variables
+save_csv('l_point_data', data_list)
+print('csv saved')

@@ -9,6 +9,19 @@ import pandas as pd
 
 import csv
 
+
+# def save_wav(timestamp, audio_data):
+#     audio_data = np.asarray(audio_data)
+#     audio_data = audio_data.reshape(-1)
+
+#     # wave 파일 생성
+#     with wave.open(f"{timestamp}.wav", 'w') as wav:
+#         wav.setnchannels(1)
+#         wav.setsampwidth(2)
+#         wav.setframerate(sample_rate)
+#         wav.writeframes(audio_data.astype(np.int16))
+
+
 # Define some constants
 USER = "user"
 PASSWORD = "user"
