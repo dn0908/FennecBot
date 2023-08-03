@@ -101,12 +101,9 @@ def websocket_thread():
 websocket_thread = threading.Thread(target=websocket_thread)
 websocket_thread.start()
 
-# Continue with other parts of the code...
-
 # Wait for the WebSocket connection to finish (i.e., when the exit_event is set)
 websocket_thread.join()
 
-# Now that the WebSocket connection is closed, you can save the CSV file
-# Assuming you have the necessary data_list and timestamp variables
+# Save CSV
 save_csv('l_point_data', data_list)
 print('csv saved')
