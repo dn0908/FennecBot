@@ -11,6 +11,7 @@ import librosa
 import websocket
 import json
 import threading
+from threading import Thread
 
 import wave
 import time
@@ -32,9 +33,9 @@ class BatCam:
     def __init__(self):
         # BATCAM RTSP_URL = "rtsp://<username>:<password>@<ip>:8544/raw
         BATCAM_IP = '192.168.2.2'
-        self.RTSP_URL = "rtsp://admin:admin@{BATCAM_IP}:8554/raw"
+        self.RTSP_URL = "rtsp:/192.168.2.2:8554/raw"
         # Load the "custom" YOLOv5 model
-        # self.model = torch.hub.load('./temp_object_detection/yolov5', 'custom', path='./temp_object_detection/yolov5/runs/train/exp2/weights/best.pt', source='local')
+        # self.model = torch.hub.load('./yolo_v5', 'custom', path='./yolo_v5/yolov5s.pt', source='local')
         self.x1, self.y1, self.x2, self.y2 = 0, 0, 0, 0
         # self.BF_data = []
         self.code_info : str= ""
@@ -76,20 +77,20 @@ class BatCam:
     #     classes = results.xyxy[0].cpu().numpy()[:, 5].astype(np.int32)
 
     #     # Load the class names from the file
-    #     with open('./temp_object_detection/custom_classes.txt', 'r') as lf:
+    #     with open('./yolo_v5/custom_classes.txt', 'r') as lf:
     #         class_names = [cname.strip() for cname in lf.readlines()]
         
     #     # Draw the bounding boxes and labels on the frame
     #     for box, score, class_idx in zip(boxes, scores, classes):
-    #         x1, y1, x2, y2 = map(int, box)
+    #         self.x1, self.y1, self.x2, self.y2 = map(int, box)
     #         class_name = class_names[class_idx]
-    #         cv2.rectangle(webcam_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-    #         cv2.putText(webcam_frame, f"{class_name}: {score:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+    #         cv2.rectangle(webcam_frame, (self.x1,self.y1), (self.x2, self.y2), (0, 255, 0), 2)
+    #         cv2.putText(webcam_frame, f"{class_name}: {score:.2f}", (self.x1, self.y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
             
     #         # Print the coordinates of the detected object
-    #         print(f"{class_name} coordinates: ({x1}, {y1}), ({x2}, {y2})")
+    #         print(f"{class_name} coordinates: ({self.x1}, {self.y1}), ({self.x2}, {self.y2})")
 
-    #     return x1, y1, x2, y2 #change to self
+    #     return self.x1,self.y1, self.x2, self.y2 #change to self
 
     def save_BF(self):
         USER = "user"
@@ -99,25 +100,23 @@ class BatCam:
         base64EncodedAuth = base64.b64encode(credential.encode()).decode()
         trigger_id = None
         count_num = 0
-
         data_list = []
+        print(count_num)
 
         ws = websocket.WebSocketApp(f"ws://{BATCAM_IP}/ws",
-                                on_open=on_open,
-                                on_message=on_message,
-                                on_error=on_error,
-                                on_close=on_close,
-                                subprotocols=["subscribe"],
-                                header={"Authorization": f"Basic %s" % base64EncodedAuth}
-                            )
-        time.sleep(2)
-        print('time passed')
+                                    on_open=on_open,
+                                    on_message=on_message,
+                                    on_error=on_error,
+                                    on_close=on_close,
+                                    subprotocols=["subscribe"],
+                                    header={"Authorization": f"Basic %s" % base64EncodedAuth}
+                                )
+        Thread(target=ws.run_forever).start()
+        time.sleep(1.5)
         ws.close()
-        # ws.run_forever(dispatcher=rel, reconnect=5)
-        # rel.signal(2, rel.abort)
-        # rel.dispatch()
+        print("WebSocket Closed")
 
-        return ws
+        # return ws
     
     def leakage_detection(self):
         def extract_features_v4(file_path, window_size, stride):
@@ -193,6 +192,7 @@ class BatCam:
                 self.x1, self.y1, self.x2, self.y2 = self.yolo_detection(frame)
             if BF_toggle != 0:
                 self.BF_data = self.save_BF()
+                BF_toggle = 0
                 
                 
             cv2.imshow('test',frame)
@@ -225,8 +225,8 @@ class BatCam:
 if __name__ == "__main__":
     Batcam = BatCam()
     # Batcam.save_BF()  
-    Batcam.leakage_detection()
-    # try:
-    #     Batcam.rtsp_to_opencv(QR_toggle = 0, yolo_toggle=0, BF_toggle=0)
-    # except Exception as error:
-    #     logging.error(error)
+    # Batcam.leakage_detection()
+    try:
+        Batcam.rtsp_to_opencv(QR_toggle = 0, yolo_toggle=0, BF_toggle=1)
+    except Exception as error:
+        logging.error(error)

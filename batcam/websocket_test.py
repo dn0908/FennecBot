@@ -1,12 +1,10 @@
 import websocket
 import json
 import threading
-
+from threading import Thread
 import wave
 import time
-
 import base64
-# Use code blocks to display formatted content such as code
 import rel
 import pickle
 import pandas as pd
@@ -26,12 +24,7 @@ save_num = 0
 data_list = []
 
 
-# Create threading event when to close connection
-exit_event = threading.Event()
-
-
 def save_csv(timestamp, audio_data):
-    # Create a csv writer object to write the csv file
     filename = f"{timestamp}.csv"
     csv_file = open(filename, "w")
     csv_writer = csv.writer(csv_file)
@@ -59,13 +52,12 @@ def on_message(_, message):
         save_csv('l_point_data', df)
         print('csv saved')
 
+
 def on_error(_, error):
     print(error)
 
 def on_close(_, close_status_code, close_msg):
     print("### closed ###")
-    # Set exit_event to signal closed
-    exit_event.set()
 
 '''
 |  EVENT ID  |      DATA      |                   json form                     |
@@ -82,8 +74,11 @@ def on_open(socket):
     socket.send(message)
     print("Message sent")
 
-def websocket_thread():
-    # Create a new WebSocket connection
+
+if __name__ == "__main__":
+    count_num = 0
+    save_num = 0
+    print(count_num)
     ws = websocket.WebSocketApp(f"ws://{BATCAM_IP}/ws",
                                 on_open=on_open,
                                 on_message=on_message,
@@ -92,18 +87,7 @@ def websocket_thread():
                                 subprotocols=["subscribe"],
                                 header={"Authorization": f"Basic %s" % base64EncodedAuth}
                             )
-    # Run the WebSocket connection until the exit_event is set
-    ws.run_forever(dispatcher=rel, ping_interval=5, ping_timeout=2, close_timeout=1, http_proxy_host=None, http_proxy_port=None, sslopt=None, suppress_origin=False, ping_payload=b'ping')
-
-
-
-# Start the WebSocket connection in a new thread
-websocket_thread = threading.Thread(target=websocket_thread)
-websocket_thread.start()
-
-# Wait for the WebSocket connection to finish (i.e., when the exit_event is set)
-websocket_thread.join()
-
-# Save CSV
-save_csv('l_point_data', data_list)
-print('csv saved')
+    Thread(target=ws.run_forever).start()
+    time.sleep(1.5)
+    ws.close()
+    print("WebSocket Closed")
