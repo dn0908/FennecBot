@@ -1,7 +1,7 @@
 import cv2
 import logging
 import numpy as np
-from batcam.websocket_new import *
+from batcam.websocket_client import *
 import torch
 import pyzbar.pyzbar as pyzbar
 from tensorflow import keras
