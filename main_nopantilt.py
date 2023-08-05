@@ -13,7 +13,7 @@ from Class_Batcam import *
 
 class MainController:
     def __init__(self):
-        self.task = 'A'
+        self.task = 'C'
         self.Scoutmini = ScoutMini()
         self.Realsense = RealSense()
         self.Batcam = BatCam()
@@ -80,8 +80,7 @@ class MainController:
                     Task = 1
                 elif Task == 1: # Find target point
                     print(f"Task {self.task} - subtask {Task} ongoing")
-                    # Move 90 degrees and see the valve
-                    self.Scoutmini.move_hard(0, 0.5, sleep = 5) 
+                    self.Scoutmini.move_90deg(dir = 'left')
                     Task = 2
                 elif Task == 2: # Collect BF data
                     print(f"Task {self.task} - subtask {Task} ongoing")
@@ -90,8 +89,10 @@ class MainController:
                     # Save data from self.Batcam.BF_data
                     # self.Batcam.save_BF(BF_toggle=1)
                     Task = 0
-                    self.Task = 'B'
-                
+                    self.task = 'B'
+                    
+                    self.Scoutmini.move_90deg(dir = 'right')
+
             if self.task == 'B': # Local_QR
                 if Task == 0: # Move to B position
                     print(f"Task {self.task} - subtask {Task} ongoing")
@@ -99,24 +100,26 @@ class MainController:
                     self.Scoutmini.move(linear_velocity, angular_velocity)
                     if self.Realsense.read_QRcodes(frame) == 'B':
                         # Move 90 degrees and see the valve
-                        self.Scoutmini.move_hard(0, 0.5, sleep = 5) 
+                        self.Scoutmini.move_90deg(dir = 'left') 
                         Task = 1
                         
                 elif Task == 1: # Find target point
                     print(f"Task {self.task} - subtask {Task} ongoing")
                     self.Batcam.rtsp_to_opencv(QR_toggle=1)
                     # self.Scoutmini.move(0, angular_velocity calculated from rtspopencv)
-                    if self.Batcam.code_info == 'something':
+                    if self.Batcam.code_info == 'B':
                         Task = 2
                 elif Task == 2: # Collect BF data
                     print(f"Task {self.task} - subtask {Task} ongoing")
-                    # self.Batcam.rtsp_to_opencv(BF_toggle=1)
+                    self.Batcam.rtsp_to_opencv(BF_toggle=1)
 
                     # Save data from self.Batcam.BF_data
                     # self.Batcam.save_BF(BF_toggle=1)
                     
                     Task = 0
-                    self.Task = 'C'
+                    self.task = 'C'
+
+                    self.Scoutmini.move_90deg(dir = 'right') 
 
             if self.task == 'C': # Local_soft
                 if Task == 0: # Move to C position
@@ -138,16 +141,14 @@ class MainController:
                 elif Task == 2: # Collect BF data
                     print(f"Task {self.task} - subtask {Task} ongoing")
                     self.Batcam.rtsp_to_opencv(BF_toggle=1)
-
-                    # Save data from self.Batcam.BF_data
-                    # self.Batcam.save_BF(BF_toggle=1)
                     
                     Task = 0
-                    self.Task = 'D'
+                    self.task = 'D'
                     
             if self.task == 'D': # Local_fullscan
                 if Task == 0: # Move to D position
                     print(f"Task {self.task} - subtask {Task} ongoing")
+                    break
                     linear_velocity, angular_velocity = self.Realsense.cal_Linetracing(contours, frame) 
                     self.Scoutmini.move(linear_velocity, angular_velocity)
                     if self.Realsense.read_QRcodes(frame) == 'D':
@@ -177,7 +178,7 @@ class MainController:
                         # self.Batcam.save_BF(BF_toggle=1)
                     
                     Task = 0
-                    self.Task = 'E'
+                    self.task = 'E'
                     
             if self.task == 'E':
                 if Task == 0:
@@ -195,19 +196,19 @@ class MainController:
                     pass
 
 
-            cv2.imshow('RealSense', mask)
-            key = cv2.waitKey(10) & 0xFF
-            if key == ord('q'):
-                break
+            # cv2.imshow('RealSense', mask)
+            # key = cv2.waitKey(10) & 0xFF
+            # if key == ord('q'):
+            #     break
 
-        self.pipeline.stop()
-        cv2.destroyAllWindows()
+        self.Realsense.pipeline.stop()
+        # cv2.destroyAllWindows()
 
 
 if __name__=="__main__":
     Maincontroller = MainController()
-    Maincontroller.main_action()
-    # Maincontroller.main_task()
+    # Maincontroller.main_action()
+    Maincontroller.main_task()
 
 
     

@@ -30,33 +30,6 @@ class RealSense:
         self.error_sum = 0 
         self.error_prev = 0
 
-    # def detect_ARmarker(self, image):
-    #     # (TaskA, 114) (TaskB, 1156) (TaskC, 116) (TaskD, 117) (TaskE, 118)
-    #     marker_arr = [114, 1156, 116, 117, 118]
-    #     markers = detect_markers(image)
-
-    #     for marker in markers:
-    #         marker.highlite_marker(image)
-    #         print("marker ID:  ", marker.id)
-    #         if marker.id == marker_arr[0]: 
-    #             print('Task A ARMARKER_DETECTED   ID: {}'.format(marker.id))
-    #             self.flag = 'TaskA'
-    #         elif marker.id == marker_arr[1]: 
-    #             print('Task B ARMARKER_DETECTED   ID: {}'.format(marker.id))
-    #             self.flag = 'TaskB'
-    #         elif marker.id == marker_arr[2]: 
-    #             print('Task C ARMARKER_DETECTED   ID: {}'.format(marker.id))
-    #             self.flag = 'TaskC'
-    #         elif marker.id == marker_arr[3]:
-    #             print('Task D ARMARKER_DETECTED   ID: {}'.format(marker.id))
-    #             self.flag = 'TaskD'
-    #         elif marker.id == marker_arr[4]:
-    #             print('Task E ARMARKER_DETECTED   ID: {}'.format(marker.id))
-    #             self.flag = 'TaskE'
-    #         else:
-    #             print('Detected marker. But NOT IN OUR TASK')
-    #             self.flag = 'None'
-
     def read_QRcodes(self, frame):
         codes = pyzbar.decode(frame)
         for code in codes:
@@ -110,8 +83,24 @@ class RealSense:
 
         return linear_velocity, angular_velocity
 
+    def stream(self):
+        while True:
+            frames = self.pipeline.wait_for_frames() 
+            frame = np.asanyarray(frames.get_color_frame().get_data()) 
+            hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+            mask = cv2.inRange(hsv, self.lower_hsv, self.upper_hsv) 
+            contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-# if __name__=="__main__":
-#     Realsense = RealSense()
-#     a, b = Realsense.cal_Linetracing()
+            cv2.imshow('RealSense', mask)
+            key = cv2.waitKey(10) & 0xFF
+            if key == ord('q'):
+                break
+
+        self.pipeline.stop()
+        cv2.destroyAllWindows()
+
+if __name__=="__main__":
+    Realsense = RealSense()
+    Realsense.stream()
+    # a, b = Realsense.cal_Linetracing()
     

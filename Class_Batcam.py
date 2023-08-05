@@ -34,6 +34,14 @@ class BatCam:
         # BATCAM RTSP_URL = "rtsp://<username>:<password>@<ip>:8544/raw
         BATCAM_IP = '192.168.2.2'
         self.RTSP_URL = "rtsp:/192.168.2.2:8554/raw"
+        # Batcam center pixels
+        self.center_x = 800
+        self.center_y = 600
+
+        # # QR position data
+        self.qr_x = 0
+        self.qr_y = 0
+
         # Load the "custom" YOLOv5 model
         # self.model = torch.hub.load('./yolo_v5', 'custom', path='./yolo_v5/yolov5s.pt', source='local')
         self.x1, self.y1, self.x2, self.y2 = 0, 0, 0, 0
@@ -57,13 +65,15 @@ class BatCam:
         codes = pyzbar.decode(frame)
         for code in codes:
             x, y , w, h = code.rect
+            self.qr_x = (2*x+w)/2
+            self.qr_y = (2*y+h)/2
             self.code_info = code.data.decode('utf-8')
-            # make bounding box around code
-            cv2.rectangle(frame, (x, y),(x+w, y+h), (0, 255, 0), 2)
-            # display info text
-            font = cv2.FONT_HERSHEY_DUPLEX
-            cv2.putText(frame, self.code_info, (x + 6, y - 6), font, 2.0, (255, 255, 255), 1)
-            # print(self.code_info)
+            # # make bounding box around code
+            # cv2.rectangle(frame, (x, y),(x+w, y+h), (0, 255, 0), 2)
+            # # display info text
+            # font = cv2.FONT_HERSHEY_DUPLEX
+            # cv2.putText(frame, self.code_info, (x + 6, y - 6), font, 2.0, (255, 255, 255), 1)
+            print(f"QR code info : {self.code_info}, Center x : {self.qr_x}, Center y : {self.qr_y}")
         
         return self.code_info
         
@@ -114,7 +124,8 @@ class BatCam:
         Thread(target=ws.run_forever).start()
         time.sleep(1.5)
         ws.close()
-        print("WebSocket Closed")
+        print("WebSocket Closed, Count Num to zero...")
+
 
         # return ws
     
@@ -176,10 +187,13 @@ class BatCam:
     def rtsp_to_opencv(self, QR_toggle = 0, yolo_toggle = 0, BF_toggle = 0):
         logging.info(f' Trying to connect to {self.RTSP_URL}...')
         # Connect to RTSP URL
-        cap = cv2.VideoCapture(self.RTSP_URL)
+        cap = cv2.VideoCapture(self.RTSP_URL, cv2.CAP_FFMPEG)
 
         while cap.isOpened():
             ret, frame = cap.read()
+            if not ret : continue
+            # w, h = cap.get(cv2.CAP_PROP_FRAME_WIDTH),cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+            # print('width', w, 'height',h)
             self.frame = frame
             
             if not ret:
@@ -187,19 +201,23 @@ class BatCam:
                 break
             
             if QR_toggle != 0:
+                prev_code_info = self.code_info
                 self.code_info = self.read_QRcodes(frame)
+                if self.code_info != prev_code_info:
+                    QR_toggle = 0
+                    break
             if yolo_toggle != 0:
                 self.x1, self.y1, self.x2, self.y2 = self.yolo_detection(frame)
             if BF_toggle != 0:
                 self.BF_data = self.save_BF()
                 BF_toggle = 0
-                
-                
-            cv2.imshow('test',frame)
-            if cv2.waitKey(1) == ord('q'):
                 break
+                
+            # cv2.imshow('test',frame)
+            # if cv2.waitKey(1) == ord('q'):
+            #     break
         cap.release()
-        cv2.destroyAllWindows()
+        # cv2.destroyAllWindows()
 
 
 # class BatcamNoise:
@@ -227,6 +245,6 @@ if __name__ == "__main__":
     # Batcam.save_BF()  
     # Batcam.leakage_detection()
     try:
-        Batcam.rtsp_to_opencv(QR_toggle = 0, yolo_toggle=0, BF_toggle=1)
+        Batcam.rtsp_to_opencv(QR_toggle = 0, yolo_toggle=0, BF_toggle=0)
     except Exception as error:
         logging.error(error)

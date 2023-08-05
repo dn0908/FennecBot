@@ -15,6 +15,18 @@ class ScoutMini:
         time.sleep(sleep)
         self.scout.SetMotionCommand(linear_vel=0, angular_vel=0)
 
+    def move_90deg(self, dir = ""):
+        if dir == "left":
+            angular_vel = 0.5
+        if dir == "right":
+            angular_vel = -0.5
+        else :
+            print('direction value error')
+
+        # Move 90 degrees and see the valve
+        for i in range(30):
+            self.move_hard(0, angular_vel, sleep = 0.1) 
+
 
 # if __name__=="__main__":
 #     Scoutmini = ScoutMini()

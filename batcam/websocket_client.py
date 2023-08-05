@@ -51,6 +51,7 @@ def on_message(_, message):
         df = pd.DataFrame(data_list, index=None, columns=None)
         save_csv('l_point_data', df)
         print('csv saved')
+        count_num = 0
 
 
 def on_error(_, error):

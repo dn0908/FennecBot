@@ -11,8 +11,8 @@ class PanTilt:
     def __init__(self):
 
         # Batcam center pixels
-        self.center_x = 320
-        self.center_y = 240
+        self.center_x = 800
+        self.center_y = 600
 
         # Pan-tilt angles and control step
 
@@ -25,12 +25,12 @@ class PanTilt:
 
         # init positions
         self.pan_position = 2960
-        self.tilt_position = -1030
+        self.tilt_position = 2300
 
         self.step_size = 10 # step of position size needs to be 10... or vibration too high
 
         # Threshold error - center & max value
-        self.error_threshold = 10
+        self.error_threshold = 30
 
         ###################### DYNAMIXEL SDK INIT ######################
         
@@ -111,8 +111,8 @@ class PanTilt:
     # Define function to control the motors using dynamixel sdk
     def MotorController(self, pan_position, tilt_position):
 
-        pan_position = self.pan_position
-        tilt_position = self.tilt_position
+        # pan_position = self.pan_position
+        # tilt_position = self.tilt_position
 
         # Write goal positions to motors
         self.write_goal_position(self.PAN_ID, pan_position)
@@ -132,33 +132,36 @@ class PanTilt:
             if abs(pan_present_position - pan_position) <= self.error_threshold and abs(tilt_present_position - tilt_position) <= self.error_threshold:
                 break
 
-    def Move2Target(self, BatCamframe):
-            NoiseArr = BatCamframe
-            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(NoiseArr)
-            cv2.circle(NoiseArr, max_loc, 10, (0, 0, 255), 2)
+    def Move2Target(self, target_x, target_y):
+            # Read present positions from motors
+            pan_present_position = self.read_present_position(self.PAN_ID)
+            tilt_present_position = self.read_present_position(self.TILT_ID)
 
-            # Calculate the error between the center and the maximum value
-            error_x = self.center_x - max_loc[0]
-            error_y = self.center_y - max_loc[1]
+            pan_position = pan_present_position
+            tilt_position = tilt_present_position
 
-            if (abs(error_x) > self.error_threshold) or (abs(error_y) > self.error_threshold):
+            pix2ang_constant = 340 / 800
+            error_x = (self.center_x - target_x)*pix2ang_constant
+            error_y = (self.center_y - target_y)*pix2ang_constant
+
+            if (abs(error_x) > self.error_threshold/3) or (abs(error_y) > self.error_threshold/3):
                 if error_x > 0:
-                    self.pan_position += self.step_size
+                    pan_position += abs(error_x)
                 else:
-                    self.pan_position -= self.step_size
+                    pan_position -= abs(error_x)
                 if error_y > 0:
-                    self.tilt_position += self.step_size
+                    tilt_position += abs(error_y)
                 else:
-                    self.tilt_position -= self.step_size
+                    tilt_position -= abs(error_y)
 
-                # Pan position limitation to [1950, 3900]
-                self.pan_position = max(1950, min(3900, self.pan_position))
+                # Pan position limitation to [920, 3980]
+                pan_position = max(920, min(3980, pan_position))
 
-                # Tilt position limitation to [-2150, -90]
-                self.tilt_position = max(-2150, min(-90, self.tilt_position))
+                # Tilt position limitation to [2300, 2600]
+                tilt_position = max(2300, min(2600, tilt_position))
 
                 # control motors
-                self.MotorController(self.pan_position, self.tilt_position)
+                self.MotorController(int(pan_position), int(tilt_position))
 
     def close_port(self):
         # disable torque for all motors
@@ -173,17 +176,80 @@ class PanTilt:
         self.portHandler.closePort()
         
 
+    def Turn(self, dir = ""):
+        if dir == "front":
+            # goal pos to FRONT
+            pan_position = 1940
+            tilt_position = 2300
+
+            self.write_goal_position(self.PAN_ID, pan_position)
+            self.write_goal_position(self.TILT_ID, tilt_position)
+            while True:
+                pan_present_position = self.read_present_position(self.PAN_ID)
+                tilt_present_position = self.read_present_position(self.TILT_ID)
+                print("[ID:%03d] GoalPos:%03d PresentPos:%03d [ID:%03d] GoalPos:%03d PresentPos:%03d" \
+                    % (self.PAN_ID, pan_position, pan_present_position, self.TILT_ID, tilt_position, tilt_present_position))
+                if abs(pan_present_position - pan_position) <= self.error_threshold and abs(tilt_present_position - tilt_position) <= self.error_threshold:
+                    break
+
+        if dir == "right":
+            # goal pos to LEFT
+            pan_position = 920
+            tilt_position = 2300
+
+            self.write_goal_position(self.PAN_ID, pan_position)
+            self.write_goal_position(self.TILT_ID, tilt_position)
+            while True:
+                pan_present_position = self.read_present_position(self.PAN_ID)
+                tilt_present_position = self.read_present_position(self.TILT_ID)
+                print("[ID:%03d] GoalPos:%03d PresentPos:%03d [ID:%03d] GoalPos:%03d PresentPos:%03d" \
+                    % (self.PAN_ID, pan_position, pan_present_position, self.TILT_ID, tilt_position, tilt_present_position))
+                if abs(pan_present_position - pan_position) <= self.error_threshold and abs(tilt_present_position - tilt_position) <= self.error_threshold:
+                    break
+
+        if dir == "left":
+            # goal pos to LEFT
+            pan_position = 2960
+            tilt_position = 2300
+
+            self.write_goal_position(self.PAN_ID, pan_position)
+            self.write_goal_position(self.TILT_ID, tilt_position)
+            while True:
+                pan_present_position = self.read_present_position(self.PAN_ID)
+                tilt_present_position = self.read_present_position(self.TILT_ID)
+                print("[ID:%03d] GoalPos:%03d PresentPos:%03d [ID:%03d] GoalPos:%03d PresentPos:%03d" \
+                    % (self.PAN_ID, pan_position, pan_present_position, self.TILT_ID, tilt_position, tilt_present_position))
+                if abs(pan_present_position - pan_position) <= self.error_threshold and abs(tilt_present_position - tilt_position) <= self.error_threshold:
+                    break
+        
+        else :
+            print("turn dir blank")
+
 if __name__=="__main__":
     Pantilt = PanTilt()
 
-    # for motor moving teset
-    
-    Pantilt.MotorController(2960,-1030)
-    time.sleep(2)
-    Pantilt.MotorController(2970,-1040)
-    time.sleep(1)
-    Pantilt.MotorController(2980,-1050)
+    # PAN
+    # 1940 front
+    # 920  move 90 to right
+    # 2960 move 90 to left
+    # 3980 back
 
+    # TILT
+    # max  up  2600
+    # max down 2300
+
+    # for motor moving teset
+    Pantilt.MotorController(3300,2300)
+    # Pantilt.Turn(dir = 'front')
+    # time.sleep(2)
+    # Pantilt.Turn(dir = 'left')
+    # time.sleep(2)
+    # Pantilt.Turn(dir = 'front')
+    # time.sleep(2)
+    # Pantilt.Turn(dir = 'right')
+    # time.sleep(2)
+    # Pantilt.Turn(dir = 'front')
+    # Pantilt.MotorController(1940,2600)
 #     Pantilt.Move2Target()
 
     
