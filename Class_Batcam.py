@@ -188,6 +188,7 @@ class BatCam:
         logging.info(f' Trying to connect to {self.RTSP_URL}...')
         # Connect to RTSP URL
         cap = cv2.VideoCapture(self.RTSP_URL, cv2.CAP_FFMPEG)
+        cap.set(cv2.CAP_PROP_FPS, 1)
 
         while cap.isOpened():
             ret, frame = cap.read()
@@ -206,18 +207,19 @@ class BatCam:
                 if self.code_info != prev_code_info:
                     QR_toggle = 0
                     break
-            if yolo_toggle != 0:
-                self.x1, self.y1, self.x2, self.y2 = self.yolo_detection(frame)
+            # if yolo_toggle != 0:
+            #     self.x1, self.y1, self.x2, self.y2 = self.yolo_detection(frame)
+
             if BF_toggle != 0:
                 self.BF_data = self.save_BF()
                 BF_toggle = 0
                 break
                 
-            # cv2.imshow('test',frame)
-            # if cv2.waitKey(1) == ord('q'):
-            #     break
+            cv2.imshow('test',frame)
+            if cv2.waitKey(500) == ord('q'):
+                break
         cap.release()
-        # cv2.destroyAllWindows()
+        cv2.destroyAllWindows()
 
 
 # class BatcamNoise:
