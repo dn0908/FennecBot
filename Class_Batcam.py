@@ -95,7 +95,7 @@ class BatCam:
         img = cv2.cvtColor(webcam_frame, cv2.COLOR_BGR2RGB)
         img_tensor = torch.from_numpy(img).float().permute(2, 0, 1).unsqueeze(0) / 255.0
         
-        # Pass the frame through the YOLOv5 model
+        # Pass the frame through the YOLOv5 model   
         results = self.yolo_model(img_tensor)
         # Extract tensor from results tuple
         detections = results[0]
@@ -216,13 +216,13 @@ class BatCam:
         
         logging.info(f' Trying to connect to {self.RTSP_URL}...')
         # Connect to RTSP URL
-        cap = cv2.VideoCapture(self.RTSP_URL, cv2.CAP_FFMPEG)
+        cap = cv2.VideoCapture("rtsp:/192.168.2.2:8554/raw", cv2.CAP_FFMPEG)
         # cap = cv2.VideoCapture(self.RTSP_URL, cv2.CAP_V4L2)
         # cap.set(cv2.CAP_PROP_FPS, 1)
 
         while True:
             ret, frame = cap.read()
-            cap = cv2.resize(cap, (640, 480)) #resize cap for model input
+            frame = cv2.resize(frame, (640, 480)) #resize cap for model input
 
             # Check if frame read is valid
             if not ret:
@@ -232,7 +232,7 @@ class BatCam:
             nowTime = time.time()
             if (nowTime - startTime) >= fpsLimit:
 
-                self.frame = frame
+                self.frame = frame #?
                 
                 if QR_toggle != 0:
                     prev_code_info = self.code_info
@@ -240,13 +240,17 @@ class BatCam:
                     if self.code_info != prev_code_info:
                         QR_toggle = 0
                         break
-                # if yolo_toggle != 0:
-                #     self.x1, self.y1, self.x2, self.y2 = self.yolo_detection(frame)
+
+                if yolo_toggle != 0:
+                    self.x1, self.y1, self.x2, self.y2, self.class_name = self.yolo_detection(frame)
+                    break
 
                 if BF_toggle != 0:
                     self.BF_data = self.save_BF()
                     BF_toggle = 0
                     break
+
+                startTime = time.time() # reset time
                 
             cv2.imshow('Batcam Capture',frame)
             if cv2.waitKey(500) == ord('q'):
@@ -261,6 +265,6 @@ if __name__ == "__main__":
     # Batcam.save_BF()  
     # Batcam.leakage_detection()
     try:
-        Batcam.rtsp_to_opencv(QR_toggle = 1, yolo_toggle=0, BF_toggle=0)
+        Batcam.rtsp_to_opencv(QR_toggle = 0, yolo_toggle = 1, BF_toggle=0)
     except Exception as error:
         logging.error(error)
