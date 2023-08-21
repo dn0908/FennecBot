@@ -9,22 +9,22 @@ fpsLimit = 1 # limitq
 startTime = time.time()
 
 
-
 # Modify sys.path
-sys.path.insert(0, "/home/smi/FennecBot/fennecbot_v03_yolov5_tiny/yolov5")
+sys.path.insert(0, "/home/smi/FennecBot/fennecbot_v05_yolov5_proto_yonsei/yolov5")
 
 # Now import attempt_load
 from yolov5.models.experimental import attempt_load
 
 # Load the "custom" YOLOv5 model
-model = attempt_load('/home/smi/FennecBot/fennecbot_v03_yolov5_tiny/last_320.pt')
+# ** 0813 모델: 0812 데이터로 학습, 크기: 640x640
+model = attempt_load('/home/smi/FennecBot/fennecbot_v05_yolov5_proto_yonsei/best.pt')
 
 # Initialize the webcam capture
 # webcam_cap = cv2.VideoCapture(0)
 webcam_cap = cv2.VideoCapture("rtsp:/192.168.2.2:8554/raw", cv2.CAP_FFMPEG)
 
 # Load class names from data.yaml
-with open('/home/smi/FennecBot/fennecbot_v03_yolov5_tiny/yolov5/FennecBot-Proto-1/data.yaml', 'r') as yaml_file:
+with open('/home/smi/FennecBot/fennecbot_v05_yolov5_proto_yonsei/yolov5/FennecBot_0812-3/data.yaml', 'r') as yaml_file:
     data = yaml.safe_load(yaml_file)
     class_names = data['names']
 
@@ -37,7 +37,7 @@ while True:
     if (nowTime - startTime) >= fpsLimit:
 
         # webcam_frame = cv2.resize(webcam_frame, (480, 640))
-        print(webcam_frame.shape)
+        # print(webcam_frame.shape)
         
         # Check if frame read is valid
         if not ret:
@@ -55,7 +55,7 @@ while True:
         detections = results[0]
 
         # Assuming there's a confidence threshold you want to apply
-        conf_thresh = 0.05
+        conf_thresh = 0.10
 
         # Use the confidence score to filter out weak detections
         mask = detections[0, :, 4] > conf_thresh
@@ -77,10 +77,7 @@ while True:
 
         startTime = time.time() # reset time
 
-    # Display the frame on the screen
-    print(webcam_frame.shape)
-
-    cv2.imshow('Webcam Capture', webcam_frame)
+    cv2.imshow('Batcam Capture', webcam_frame)
 
     # Exit the program if the user presses the 'q' key
     if cv2.waitKey(1) & 0xFF == ord('q'):
