@@ -2,7 +2,7 @@ import cv2
 import logging
 import numpy as np
 from batcam.websocket_client import *
-import torch
+
 import pyzbar.pyzbar as pyzbar
 from tensorflow import keras
 import librosa
@@ -26,6 +26,11 @@ import csv
 import numpy as np
 
 
+import torch
+import yaml
+import sys
+import time
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -42,16 +47,24 @@ class BatCam:
         self.qr_x = 0
         self.qr_y = 0
 
+        ##### OBJECT DETECTION : CUSTOM YOLOv5 MODEL CONFIGURATION #####
+        sys.path.insert(0, "/home/smi/FennecBot/fennecbot_v05_yolov5_proto_yonsei/yolov5")
+        from yolov5.models.experimental import attempt_load # Now import attempt_load
         # Load the "custom" YOLOv5 model
-        # self.model = torch.hub.load('./yolo_v5', 'custom', path='./yolo_v5/yolov5s.pt', source='local')
+        # ** 0813 모델: 0812 데이터로 학습, 크기: 640x640
+        self.yolo_model = attempt_load('/home/smi/FennecBot/fennecbot_v05_yolov5_proto_yonsei/best.pt')
         self.x1, self.y1, self.x2, self.y2 = 0, 0, 0, 0
+        self.class_name : str= ""
+
+
         # self.BF_data = []
         self.code_info : str= ""
         self.FullScan_arr = []
         self.frame = []
         # self.on_message = []
 
-        # Noise Model
+
+        ##### NOISE DETECTION : DEEP LEARNING MODEL CONFIGURATIONS #####
         self.noise_model = keras.models.load_model('./models/model.h5')
         # self.noise_model.summary()
         self.sr = 96000
@@ -77,30 +90,42 @@ class BatCam:
         
         return self.code_info
         
-    # def yolo_detection(self, webcam_frame):
-    #     # Pass the frame through the YOLOv5 model
-    #     results = self.model(webcam_frame)
-
-    #     # Extract the boxes, scores, and classes from the results
-    #     boxes = results.xyxy[0].cpu().numpy()[:, :4]
-    #     scores = results.xyxy[0].cpu().numpy()[:, 4]
-    #     classes = results.xyxy[0].cpu().numpy()[:, 5].astype(np.int32)
-
-    #     # Load the class names from the file
-    #     with open('./yolo_v5/custom_classes.txt', 'r') as lf:
-    #         class_names = [cname.strip() for cname in lf.readlines()]
+    def yolo_detection(self, webcam_frame):
+        # Convert the webcam frame from BGR to RGB and reshape for model input
+        img = cv2.cvtColor(webcam_frame, cv2.COLOR_BGR2RGB)
+        img_tensor = torch.from_numpy(img).float().permute(2, 0, 1).unsqueeze(0) / 255.0
         
-    #     # Draw the bounding boxes and labels on the frame
-    #     for box, score, class_idx in zip(boxes, scores, classes):
-    #         self.x1, self.y1, self.x2, self.y2 = map(int, box)
-    #         class_name = class_names[class_idx]
-    #         cv2.rectangle(webcam_frame, (self.x1,self.y1), (self.x2, self.y2), (0, 255, 0), 2)
-    #         cv2.putText(webcam_frame, f"{class_name}: {score:.2f}", (self.x1, self.y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-            
-    #         # Print the coordinates of the detected object
-    #         print(f"{class_name} coordinates: ({self.x1}, {self.y1}), ({self.x2}, {self.y2})")
+        # Pass the frame through the YOLOv5 model
+        results = self.yolo_model(img_tensor)
+        # Extract tensor from results tuple
+        detections = results[0]
 
-    #     return self.x1,self.y1, self.x2, self.y2 #change to self
+        # Assuming there's a confidence threshold you want to apply
+        conf_thresh = 0.10
+        # Use the confidence score to filter out weak detections
+        mask = detections[0, :, 4] > conf_thresh
+
+        # Extract the boxes, scores, and classes from the detections
+        boxes = detections[0, mask, :4].cpu().numpy()
+        scores = detections[0, mask, 4].cpu().numpy()
+        classes = detections[0, mask, 5].cpu().numpy().astype(np.int32)
+
+        # Load class names from data.yaml
+        with open('/home/smi/FennecBot/fennecbot_v05_yolov5_proto_yonsei/yolov5/FennecBot_0812-3/data.yaml', 'r') as yaml_file:
+            data = yaml.safe_load(yaml_file)
+            self.class_names = data['names']
+
+        # Draw the bounding boxes and labels on the frame
+        for box, score, class_idx in zip(boxes, scores, classes):
+            x1, y1, x2, y2 = map(int, box)
+            self.class_name = self.class_names[class_idx]
+            cv2.rectangle(webcam_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            cv2.putText(webcam_frame, f"{self.class_name}: {score:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            
+            # Print the coordinates of the detected object
+            print(f"{self.class_name} coordinates: ({x1}, {y1}), ({x2}, {y2})")
+
+        return self.x1,self.y1, self.x2, self.y2, self.class_name #change to self
 
     def save_BF(self):
         USER = "user"
@@ -185,61 +210,50 @@ class BatCam:
 
 
     def rtsp_to_opencv(self, QR_toggle = 0, yolo_toggle = 0, BF_toggle = 0):
+        
+        fpsLimit = 1 # limitq
+        startTime = time.time()
+        
         logging.info(f' Trying to connect to {self.RTSP_URL}...')
         # Connect to RTSP URL
         cap = cv2.VideoCapture(self.RTSP_URL, cv2.CAP_FFMPEG)
-        cap.set(cv2.CAP_PROP_FPS, 1)
+        # cap = cv2.VideoCapture(self.RTSP_URL, cv2.CAP_V4L2)
+        # cap.set(cv2.CAP_PROP_FPS, 1)
 
-        while cap.isOpened():
+        while True:
             ret, frame = cap.read()
-            if not ret : continue
-            # w, h = cap.get(cv2.CAP_PROP_FRAME_WIDTH),cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-            # print('width', w, 'height',h)
-            self.frame = frame
-            
-            if not ret:
-                print("ERROR !")
-                break
-            
-            if QR_toggle != 0:
-                prev_code_info = self.code_info
-                self.code_info = self.read_QRcodes(frame)
-                if self.code_info != prev_code_info:
-                    QR_toggle = 0
-                    break
-            # if yolo_toggle != 0:
-            #     self.x1, self.y1, self.x2, self.y2 = self.yolo_detection(frame)
+            cap = cv2.resize(cap, (640, 480)) #resize cap for model input
 
-            if BF_toggle != 0:
-                self.BF_data = self.save_BF()
-                BF_toggle = 0
-                break
+            # Check if frame read is valid
+            if not ret:
+                print("Failed to grab frame.")
+                continue
+
+            nowTime = time.time()
+            if (nowTime - startTime) >= fpsLimit:
+
+                self.frame = frame
                 
-            cv2.imshow('test',frame)
+                if QR_toggle != 0:
+                    prev_code_info = self.code_info
+                    self.code_info = self.read_QRcodes(frame)
+                    if self.code_info != prev_code_info:
+                        QR_toggle = 0
+                        break
+                # if yolo_toggle != 0:
+                #     self.x1, self.y1, self.x2, self.y2 = self.yolo_detection(frame)
+
+                if BF_toggle != 0:
+                    self.BF_data = self.save_BF()
+                    BF_toggle = 0
+                    break
+                
+            cv2.imshow('Batcam Capture',frame)
             if cv2.waitKey(500) == ord('q'):
                 break
         cap.release()
         cv2.destroyAllWindows()
 
-
-# class BatcamNoise:
-#     def __init__(self):
-#         pass
-
-#     def Batcam_BF(self, toggle=0):
-#         if toggle == 1:
-#             ws = websocket.WebSocketApp(
-#                 f"ws://{BATCAM_IP}:80/ws",
-#                 on_open=on_open,
-#                 on_message=on_message,
-#                 on_error=on_error,
-#                 on_close=on_close,
-#                 subprotocols=["subscribe"],
-#                 header={"Authorization": f"Basic %s" % base64EncodedAuth}
-#             )
-#             ws.run_forever(dispatcher=rel, reconnect=5)
-#             rel.signal(2, rel.abort)
-#             rel.dispatch()
 
 
 if __name__ == "__main__":
@@ -247,6 +261,6 @@ if __name__ == "__main__":
     # Batcam.save_BF()  
     # Batcam.leakage_detection()
     try:
-        Batcam.rtsp_to_opencv(QR_toggle = 0, yolo_toggle=0, BF_toggle=0)
+        Batcam.rtsp_to_opencv(QR_toggle = 1, yolo_toggle=0, BF_toggle=0)
     except Exception as error:
         logging.error(error)
