@@ -210,15 +210,11 @@ class BatCam:
 
 
     def rtsp_to_opencv(self, QR_toggle = 0, yolo_toggle = 0, BF_toggle = 0):
-        
         fpsLimit = 1 # limitq
         startTime = time.time()
-        
         logging.info(f' Trying to connect to {self.RTSP_URL}...')
-        # Connect to RTSP URL
-        cap = cv2.VideoCapture("rtsp:/192.168.2.2:8554/raw", cv2.CAP_FFMPEG)
-        # cap = cv2.VideoCapture(self.RTSP_URL, cv2.CAP_V4L2)
-        # cap.set(cv2.CAP_PROP_FPS, 1)
+
+        cap = cv2.VideoCapture(self.RTSP_URL, cv2.CAP_FFMPEG)
 
         while True:
             ret, frame = cap.read()
@@ -231,7 +227,6 @@ class BatCam:
 
             nowTime = time.time()
             if (nowTime - startTime) >= fpsLimit:
-
                 self.frame = frame #?
                 
                 if QR_toggle != 0:
@@ -255,6 +250,7 @@ class BatCam:
             cv2.imshow('Batcam Capture',frame)
             if cv2.waitKey(500) == ord('q'):
                 break
+            
         cap.release()
         cv2.destroyAllWindows()
 
