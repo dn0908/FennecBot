@@ -39,28 +39,25 @@ class BatCam:
         # BATCAM RTSP_URL = "rtsp://<username>:<password>@<ip>:8544/raw
         BATCAM_IP = '192.168.2.2'
         self.RTSP_URL = "rtsp:/192.168.2.2:8554/raw"
-        # Batcam center pixels
-        self.center_x = 800
-        self.center_y = 600
+        # self.center_x = 800
+        # self.center_y = 600 # Batcam center pixels
 
-        # # QR position data
-        self.qr_x = 0
+        ##### QR DETECTION : CODE INFO CONFIGURATION #####
+        self.qr_x = 0 # QR position data
         self.qr_y = 0
+        self.code_info : str= "" # QR code info
 
         ##### OBJECT DETECTION : CUSTOM YOLOv5 MODEL CONFIGURATION #####
         sys.path.insert(0, "/home/smi/FennecBot/fennecbot_v05_yolov5_proto_yonsei/yolov5")
         from yolov5.models.experimental import attempt_load # Now import attempt_load
-        # Load the "custom" YOLOv5 model
-        # ** 0813 모델: 0812 데이터로 학습, 크기: 640x640
-        self.yolo_model = attempt_load('/home/smi/FennecBot/fennecbot_v05_yolov5_proto_yonsei/best.pt')
+        self.yolo_model = attempt_load('/home/smi/FennecBot/fennecbot_v05_yolov5_proto_yonsei/best.pt') # Load the "custom" YOLOv5 model
         self.x1, self.y1, self.x2, self.y2 = 0, 0, 0, 0
         self.class_name : str= ""
 
 
         # self.BF_data = []
-        self.code_info : str= ""
-        self.FullScan_arr = []
-        self.frame = []
+        # self.FullScan_arr = []
+        # self.frame = []
         # self.on_message = []
 
 

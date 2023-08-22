@@ -10,9 +10,12 @@ from dynamixel.DynamixelSDK.python.src.dynamixel_sdk import *  # Dynamixel SDK l
 class PanTilt:
     def __init__(self):
 
-        # Batcam center pixels
-        self.center_x = 800
-        self.center_y = 600
+        # # Batcam center pixels
+        # self.center_x = 800
+        # self.center_y = 600
+        # Reshape !
+        self.center_x = 320
+        self.center_y = 240
 
         # Pan-tilt angles and control step
 
