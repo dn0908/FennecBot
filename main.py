@@ -109,6 +109,26 @@ class MainController:
                     print(f"Task {self.task} - subtask {Task} ongoing")
                     self.Batcam.rtsp_to_opencv(QR_toggle=1)
                     self.Pantilt.Move2Target(self.Batcam.qr_x, self.Batcam.qr_y)
+                    
+                    
+                    '''
+                    pix2ang_constant = 340 / 800
+                    error_x = (self.Pantilt.center_x - self.Batcam.qr_x)*pix2ang_constant
+                    error_y = (self.Pantilt.center_y - self.Batcam.qr_y)*pix2ang_constant
+                    step_size = 10
+                    while(1):
+                        pan_present_position = self.Pantilt.read_present_position(self.Pantilt.PAN_ID)
+                        tilt_present_position = self.Pantilt.read_present_position(self.Pantilt.TILT_ID)
+                        if (abs(pan_present_position-error_x) > self.Pantilt.error_threshold/3) or (abs(tilt_present_position-error_y) > self.Pantilt.error_threshold/3):
+                            if error_x > 0: pan_present_position += step_size
+                            else: pan_present_position -= step_size
+
+                            if error_y > 0: tilt_present_position += step_size
+                            else: tilt_present_position -= step_size
+                            
+                            self.Pantilt.Move2Target(pan_present_position, tilt_present_position)
+                    '''
+                    
                     if self.Batcam.code_info == 'B':
                         Task = 2
                 elif Task == 2: # Collect BF data
