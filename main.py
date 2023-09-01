@@ -142,7 +142,6 @@ class MainController:
             if self.task == 'C': # Local_soft
                 if Task == 0: # Move to C position
                     print(f"Task {self.task} - subtask {Task} ongoing")
-                    break
                     linear_velocity, angular_velocity = self.Realsense.cal_Linetracing(contours, frame) 
                     self.Scoutmini.move(linear_velocity, angular_velocity)
                     if self.Realsense.read_QRcodes(frame) == 'C':
@@ -162,6 +161,7 @@ class MainController:
                     self.Batcam.rtsp_to_opencv(BF_toggle=1)
                     Task = 0
                     self.task = 'D'
+                    break
                     
 
             if self.task == 'D': # Local_fullscan
