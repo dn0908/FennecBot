@@ -18,7 +18,7 @@ class RealSense:
         self.pipeline.start(self.config)
         # Config Camera
         self.lower_hsv = np.array([0, 115, 115]) # lower bound for detecting red objects
-        self.upper_hsv = np.array([90, 255, 255]) # upper bound for detecting red objects
+        self.upper_hsv = np.array([255, 255, 255]) # upper bound for detecting red objects
         self.camera_width = 640 
         self.camera_height = 480 
         self.camera_center_x = self.camera_width / 2 
@@ -91,6 +91,7 @@ class RealSense:
             mask = cv2.inRange(hsv, self.lower_hsv, self.upper_hsv) 
             contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
+            # cv2.imshow("realsense rgb video", frame)
             cv2.imshow('RealSense', mask)
             key = cv2.waitKey(10) & 0xFF
             if key == ord('q'):
