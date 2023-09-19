@@ -49,7 +49,10 @@ def on_message(_, message):
 
     if count_num == 32:
         df = pd.DataFrame(data_list, index=None, columns=None)
-        save_csv('l_point_data', df)
+        # save_csv('l_point_data', df)
+        timestamp = timestamp.replace(".", "_")
+        save_csv(timestamp, df)
+
         print('csv saved')
         count_num = 0
 

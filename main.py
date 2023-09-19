@@ -10,7 +10,8 @@
 from Class_RealSense import *
 from Class_ScoutMini import *
 from Class_PanTilt import *
-from Class_Batcam import *
+# from Class_Batcam import *
+from Class_Batcam_LpointVER import *
 
 class MainController:
     def __init__(self):
@@ -175,21 +176,35 @@ class MainController:
                         Task = 1
                         
                 elif Task == 1: # Find target point full scan
-                    for i in range(0,100):
-                        for j in range(0,50):
-                            # self.Pantilt.MotorController(i, j)
-                            self.Batcam.rtsp_to_opencv(yolo_toggle=1)
-                            if self.Batcam.x1 != 0:
-                                target_pos = [self.Batcam.x1, self.Batcam.y1, self.Batcam.x2, self.Batcam.y2]                        
-                                self.Batcam.FullScan_arr.append(target_pos)
-                                self.Batcam.x1, self.Batcam.y1, self.Batcam.x2, self.Batcam.y2 = 0,0,0,0
+
+                    ##### FOR LPOINT CHANGING & FULL SCAN #####
+                    data_folder = "Fullscan_" + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                    os.makedirs(data_folder, exist_ok=True)
+
+                    for point in range(1200):
+                        print(f"Changing Listening Point to {point}")
+                        self.Batcam.change_LPoint(point)
+                        
+                        time.sleep(5)  # Adjust the delay as needed
+
+                        #######################################
+
+                    
+                    # for i in range(0,100):
+                    #     for j in range(0,50):
+                    #         # self.Pantilt.MotorController(i, j)
+                    #         self.Batcam.rtsp_to_opencv(yolo_toggle=1)
+                    #         if self.Batcam.x1 != 0:
+                    #             target_pos = [self.Batcam.x1, self.Batcam.y1, self.Batcam.x2, self.Batcam.y2]                        
+                    #             self.Batcam.FullScan_arr.append(target_pos)
+                    #             self.Batcam.x1, self.Batcam.y1, self.Batcam.x2, self.Batcam.y2 = 0,0,0,0
                     Task = 2
                     
                 elif Task == 2: # Collect BF data
-                    for target in self.Batcam.FullScan_arr:
-                        # self.Pantilt.MotorController(pan_angle=target[0], tilt_angle=target[1])
-                        self.Batcam.rtsp_to_opencv(BF_toggle=1)
-                    
+                    # for target in self.Batcam.FullScan_arr:
+                    #     # self.Pantilt.MotorController(pan_angle=target[0], tilt_angle=target[1])
+                    #     self.Batcam.rtsp_to_opencv(BF_toggle=1)
+
                     Task = 0
                     self.task = 'E'
                     

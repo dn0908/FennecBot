@@ -2,6 +2,7 @@ import cv2
 import logging
 import numpy as np
 from batcam.websocket_client import *
+from batcam.lpoint_client import *
 
 import pyzbar.pyzbar as pyzbar
 from tensorflow import keras
@@ -15,6 +16,8 @@ from threading import Thread
 
 import wave
 import time
+import os
+import datetime
 
 import requests
 
@@ -38,7 +41,7 @@ logging.basicConfig(level=logging.INFO)
 class BatCam:
     def __init__(self):
         # BATCAM RTSP_URL = "rtsp://<username>:<password>@<ip>:8544/raw
-        BATCAM_IP = '192.168.2.2'
+        self.BATCAM_IP = '192.168.2.2'
         self.RTSP_URL = "rtsp:/192.168.2.2:8554/raw"
         # self.center_x = 800
         # self.center_y = 600 # Batcam center pixels
@@ -71,6 +74,13 @@ class BatCam:
         self.stride_sec = self.window_size_sec/2.0  # Stride length in seconds
         self.stride = int(self.stride_sec / (512 / self.sr))
         self.noise_detection = 0
+
+
+        ##### CONFIG FOR L POINT CHANGING #####
+        self.user_name = "admin"
+        self.user_pwd = "admin"
+        self.credential = f"{USER}:{PASSWORD}"
+        self.base64EncodedAuth = base64.b64encode(credential.encode()).decode()
 
 
     def read_QRcodes(self, frame):
@@ -149,10 +159,41 @@ class BatCam:
         time.sleep(1.5)
         ws.close()
         print("WebSocket Closed, Count Num to zero...")
-
-
         # return ws
     
+
+    def change_LPoint(self, new_index):
+        USER = "admin"
+        PASSWORD = "admin"
+        credential = f"{USER}:{PASSWORD}"
+        base64EncodedAuth = base64.b64encode(credential.encode()).decode()
+
+        API_HOST = f"http://{BATCAM_IP}"
+        url = API_HOST + "/beamforming/setting"
+        headers = {
+            "Authorization": f"Basic {base64EncodedAuth}"
+        }
+        camera_settings = {
+            "low_cut": 2000,
+            "high_cut": 45000,
+            "gain": 100,
+            "distance": 10,
+            "x_cal": -0.02,
+            "y_cal": 0.02,
+            "index_l_channel": 0,
+            "index_l": f"0,{new_index}"
+        }
+        print("Requesting body: " + str(camera_settings) + "\n")
+        try:
+            current_setting = requests.get(url, headers=headers)
+            print("Current Camera setting: " + str(current_setting.json()) + "\n")
+
+            response = requests.patch(url, headers=headers, data=camera_settings)
+            print("Result: " + str(response.json()) + "\n")
+        except Exception as ex:
+            print(ex)
+
+
     def leakage_detection(self):
         def extract_features_v4(file_path, window_size, stride):
             data = pd.read_csv(file_path)
@@ -243,6 +284,7 @@ class BatCam:
                     self.BF_data = self.save_BF()
                     BF_toggle = 0
                     break
+
 
                 startTime = time.time() # reset time
                 
