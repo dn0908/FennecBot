@@ -214,7 +214,8 @@ class MainController:
                         self.Batcam.change_LPoint(point)
                         
                         time.sleep(5)  # Adjust the delay as needed
-
+                        
+                        self.Batcam.rtsp_to_opencv(BF_toggle=1)
                         #######################################
 
                     
