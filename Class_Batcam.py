@@ -126,6 +126,60 @@ class BatCam:
 
         return self.x1,self.y1, self.x2, self.y2, self.class_name #change to self
 
+
+    def multiple_yolo_detection(self, webcam_frame):
+        # Convert the webcam frame from BGR to RGB and reshape for model input
+        img = cv2.cvtColor(webcam_frame, cv2.COLOR_BGR2RGB)
+        img_tensor = torch.from_numpy(img).float().permute(2, 0, 1).unsqueeze(0) / 255.0
+        
+        # Pass the frame through the YOLOv5 model   
+        results = self.yolo_model(img_tensor)
+        # Extract tensor from results tuple
+        detections = results[0]
+
+        # Create a list to store the results
+        self.yolo_list = []
+
+        # Assuming there's a confidence threshold you want to apply
+        conf_thresh = 0.10
+        # Use the confidence score to filter out weak detections
+        mask = detections[0, :, 4] > conf_thresh
+
+        # Extract the boxes, scores, and classes from the detections
+        boxes = detections[0, mask, :4].cpu().numpy()
+        scores = detections[0, mask, 4].cpu().numpy()
+        classes = detections[0, mask, 5].cpu().numpy().astype(np.int32)
+
+        # Load class names from data.yaml
+        with open('/home/smi/FennecBot/fennecbot_v05_yolov5_proto_yonsei/yolov5/FennecBot_0812-3/data.yaml', 'r') as yaml_file:
+            data = yaml.safe_load(yaml_file)
+            self.class_names = data['names']
+
+        # Draw the bounding boxes and labels on the frame
+        for box, score, class_idx in zip(boxes, scores, classes):
+            x1, y1, x2, y2 = map(int, box)
+            self.class_name = self.class_names[class_idx]
+
+            yolo_x = (x1 + x2) / 2
+            yolo_y = (y1 + y2) / 2
+            result = {
+                "class_name": class_name,
+                "score": score,
+                "x_coordinate": yolo_x,
+                "y_coordinate": yolo_y
+            }
+            self.yolo_list.append(result)
+
+            # cv2.rectangle(webcam_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            # cv2.putText(webcam_frame, f"{self.class_name}: {score:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            
+            # Print the coordinates of the detected object
+            print(f"{self.class_name} coordinates: ({x1}, {y1}), ({x2}, {y2})")
+
+        return self.yolo_list #change to self
+
+
+
     def save_BF(self):
         USER = "user"
         PASSWORD = "user"
@@ -236,7 +290,8 @@ class BatCam:
                         break
 
                 if yolo_toggle != 0:
-                    self.x1, self.y1, self.x2, self.y2, self.class_name = self.yolo_detection(frame)
+                    #self.x1, self.y1, self.x2, self.y2, self.class_name = self.yolo_detection(frame)
+                    self.yolo_list = self.multiple_yolo_detection(frame)
                     break
 
                 if BF_toggle != 0:

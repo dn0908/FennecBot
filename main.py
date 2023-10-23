@@ -78,7 +78,7 @@ class MainController:
             mask = cv2.inRange(hsv, self.Realsense.lower_hsv, self.Realsense.upper_hsv) 
             contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             
-            
+
             if self.task == 'A': # Local_hard
                 if Task == 0: # Move to A position
                     self.Pantilt.Turn(dir = "front")

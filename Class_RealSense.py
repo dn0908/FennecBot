@@ -17,8 +17,10 @@ class RealSense:
         self.config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30) 
         self.pipeline.start(self.config)
         # Config Camera
-        self.lower_hsv = np.array([0, 115, 115]) # lower bound for detecting red objects
-        self.upper_hsv = np.array([255, 255, 255]) # upper bound for detecting red objects
+        self.lower_hsv = np.array([160,50,50])
+        self.upper_hsv = np.array([180,255,255])
+        # self.lower_hsv = np.array([0, 115, 115]) # lower bound for detecting red objects
+        # self.upper_hsv = np.array([255, 255, 255]) # upper bound for detecting red objects
         self.camera_width = 640 
         self.camera_height = 480 
         self.camera_center_x = self.camera_width / 2 
