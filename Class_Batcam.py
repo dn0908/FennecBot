@@ -158,7 +158,7 @@ class BatCam:
         # Draw the bounding boxes and labels on the frame
         for box, score, class_idx in zip(boxes, scores, classes):
             x1, y1, x2, y2 = map(int, box)
-            self.class_name = self.class_names[class_idx]
+            class_name = self.class_names[class_idx]
 
             yolo_x = (x1 + x2) / 2
             yolo_y = (y1 + y2) / 2
@@ -174,7 +174,7 @@ class BatCam:
             # cv2.putText(webcam_frame, f"{self.class_name}: {score:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
             
             # Print the coordinates of the detected object
-            print(f"{self.class_name} coordinates: ({x1}, {y1}), ({x2}, {y2})")
+            print(f"{class_name} coordinates: ({x1}, {y1}), ({x2}, {y2})")
 
         return self.yolo_list #change to self
 
