@@ -2,6 +2,7 @@ import cv2
 import logging
 import numpy as np
 from batcam.websocket_client import *
+# from batcam.lpoint_client import *
 
 import pyzbar.pyzbar as pyzbar
 from tensorflow import keras
@@ -15,6 +16,8 @@ from threading import Thread
 
 import wave
 import time
+import os
+import datetime
 
 import requests
 
@@ -38,7 +41,7 @@ logging.basicConfig(level=logging.INFO)
 class BatCam:
     def __init__(self):
         # BATCAM RTSP_URL = "rtsp://<username>:<password>@<ip>:8544/raw
-        BATCAM_IP = '192.168.2.2'
+        self.BATCAM_IP = '192.168.2.2'
         self.RTSP_URL = "rtsp:/192.168.2.2:8554/raw"
         # self.center_x = 800
         # self.center_y = 600 # Batcam center pixels
@@ -71,6 +74,13 @@ class BatCam:
         self.stride_sec = self.window_size_sec/2.0  # Stride length in seconds
         self.stride = int(self.stride_sec / (512 / self.sr))
         self.noise_detection = 0
+
+
+        ##### CONFIG FOR L POINT CHANGING #####
+        self.user_name = "admin"
+        self.user_pwd = "admin"
+        self.credential = f"{USER}:{PASSWORD}"
+        self.base64EncodedAuth = base64.b64encode(credential.encode()).decode()
 
 
     def read_QRcodes(self, frame):
@@ -126,60 +136,6 @@ class BatCam:
 
         return self.x1,self.y1, self.x2, self.y2, self.class_name #change to self
 
-
-    def multiple_yolo_detection(self, webcam_frame):
-        # Convert the webcam frame from BGR to RGB and reshape for model input
-        img = cv2.cvtColor(webcam_frame, cv2.COLOR_BGR2RGB)
-        img_tensor = torch.from_numpy(img).float().permute(2, 0, 1).unsqueeze(0) / 255.0
-        
-        # Pass the frame through the YOLOv5 model   
-        results = self.yolo_model(img_tensor)
-        # Extract tensor from results tuple
-        detections = results[0]
-
-        # Create a list to store the results
-        self.yolo_list = []
-
-        # Assuming there's a confidence threshold you want to apply
-        conf_thresh = 0.10
-        # Use the confidence score to filter out weak detections
-        mask = detections[0, :, 4] > conf_thresh
-
-        # Extract the boxes, scores, and classes from the detections
-        boxes = detections[0, mask, :4].cpu().numpy()
-        scores = detections[0, mask, 4].cpu().numpy()
-        classes = detections[0, mask, 5].cpu().numpy().astype(np.int32)
-
-        # Load class names from data.yaml
-        with open('/home/smi/FennecBot/fennecbot_v05_yolov5_proto_yonsei/yolov5/FennecBot_0812-3/data.yaml', 'r') as yaml_file:
-            data = yaml.safe_load(yaml_file)
-            self.class_names = data['names']
-
-        # Draw the bounding boxes and labels on the frame
-        for box, score, class_idx in zip(boxes, scores, classes):
-            x1, y1, x2, y2 = map(int, box)
-            class_name = self.class_names[class_idx]
-
-            yolo_x = (x1 + x2) / 2
-            yolo_y = (y1 + y2) / 2
-            result = {
-                "class_name": class_name,
-                "score": score,
-                "x_coordinate": yolo_x,
-                "y_coordinate": yolo_y
-            }
-            self.yolo_list.append(result)
-
-            # cv2.rectangle(webcam_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            # cv2.putText(webcam_frame, f"{self.class_name}: {score:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-            
-            # Print the coordinates of the detected object
-            print(f"{class_name} coordinates: ({x1}, {y1}), ({x2}, {y2})")
-
-        return self.yolo_list #change to self
-
-
-
     def save_BF(self):
         USER = "user"
         PASSWORD = "user"
@@ -203,10 +159,41 @@ class BatCam:
         time.sleep(1.5)
         ws.close()
         print("WebSocket Closed, Count Num to zero...")
-
-
         # return ws
     
+
+    def change_LPoint(self, new_index):
+        USER = "admin"
+        PASSWORD = "admin"
+        credential = f"{USER}:{PASSWORD}"
+        base64EncodedAuth = base64.b64encode(credential.encode()).decode()
+
+        API_HOST = f"http://{BATCAM_IP}"
+        url = API_HOST + "/beamforming/setting"
+        headers = {
+            "Authorization": f"Basic {base64EncodedAuth}"
+        }
+        camera_settings = {
+            "low_cut": 2000,
+            "high_cut": 45000,
+            "gain": 100,
+            "distance": 10,
+            "x_cal": -0.02,
+            "y_cal": 0.02,
+            "index_l_channel": 0,
+            "index_l": f"0,{new_index}"
+        }
+        print("Requesting body: " + str(camera_settings) + "\n")
+        try:
+            current_setting = requests.get(url, headers=headers)
+            print("Current Camera setting: " + str(current_setting.json()) + "\n")
+
+            response = requests.patch(url, headers=headers, data=camera_settings)
+            print("Result: " + str(response.json()) + "\n")
+        except Exception as ex:
+            print(ex)
+
+
     def leakage_detection(self):
         def extract_features_v4(file_path, window_size, stride):
             data = pd.read_csv(file_path)
@@ -290,14 +277,14 @@ class BatCam:
                         break
 
                 if yolo_toggle != 0:
-                    #self.x1, self.y1, self.x2, self.y2, self.class_name = self.yolo_detection(frame)
-                    self.yolo_list = self.multiple_yolo_detection(frame)
+                    self.x1, self.y1, self.x2, self.y2, self.class_name = self.yolo_detection(frame)
                     break
 
                 if BF_toggle != 0:
                     self.BF_data = self.save_BF()
                     BF_toggle = 0
                     break
+
 
                 startTime = time.time() # reset time
                 

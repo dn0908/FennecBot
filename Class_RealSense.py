@@ -26,7 +26,7 @@ class RealSense:
         self.camera_center_x = self.camera_width / 2 
         self.camera_center_y = self.camera_height / 2
         # Config Motor control PID gain
-        self.Kp = 0.01 
+        self.Kp = 0.5
         self.Ki = 0.0 
         self.Kd = 0.0 
         self.error_sum = 0 
@@ -93,8 +93,8 @@ class RealSense:
             mask = cv2.inRange(hsv, self.lower_hsv, self.upper_hsv) 
             contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-            # cv2.imshow("realsense rgb video", frame)
-            cv2.imshow('RealSense', mask)
+            cv2.imshow("realsense rgb video", frame)
+            #cv2.imshow('RealSense', mask)
             key = cv2.waitKey(10) & 0xFF
             if key == ord('q'):
                 break
@@ -106,4 +106,3 @@ if __name__=="__main__":
     Realsense = RealSense()
     Realsense.stream()
     # a, b = Realsense.cal_Linetracing()
-    
