@@ -27,13 +27,13 @@ class PanTilt:
         # 좌측 -90
 
         # init positions
-        self.pan_position = 2960
-        self.tilt_position = 2300
+        self.pan_position = 1955 #2960
+        self.tilt_position = 2100 #2300
 
         self.step_size = 10 # step of position size needs to be 10... or vibration too high
 
         # Threshold error - center & max value
-        self.error_threshold = 30
+        self.error_threshold = 50
 
         ###################### DYNAMIXEL SDK INIT ######################
         
@@ -182,8 +182,8 @@ class PanTilt:
     def Turn(self, dir = ""):
         if dir == "front":
             # goal pos to FRONT
-            pan_position = 1940
-            tilt_position = 2300
+            pan_position = 2000 #1940
+            tilt_position = 2100 #2300
 
             self.write_goal_position(self.PAN_ID, pan_position)
             self.write_goal_position(self.TILT_ID, tilt_position)
@@ -196,9 +196,9 @@ class PanTilt:
                     break
 
         if dir == "right":
-            # goal pos to LEFT
-            pan_position = 920
-            tilt_position = 2300
+            # goal pos to RIGHT
+            pan_position = 1460 #920
+            tilt_position = 2300 #2300
 
             self.write_goal_position(self.PAN_ID, pan_position)
             self.write_goal_position(self.TILT_ID, tilt_position)
@@ -212,8 +212,8 @@ class PanTilt:
 
         if dir == "left":
             # goal pos to LEFT
-            pan_position = 2960
-            tilt_position = 2300
+            pan_position = 2350 #3650 ,2960
+            tilt_position = 2100 #2300
 
             self.write_goal_position(self.PAN_ID, pan_position)
             self.write_goal_position(self.TILT_ID, tilt_position)
@@ -242,12 +242,12 @@ if __name__=="__main__":
     # max down 2300
 
     # for motor moving teset
-    Pantilt.MotorController(3300,2300)
+    # Pantilt.MotorController(3300,2300)
     # Pantilt.Turn(dir = 'front')
     # time.sleep(2)
     # Pantilt.Turn(dir = 'left')
     # time.sleep(2)
-    # Pantilt.Turn(dir = 'front')
+    Pantilt.Turn(dir = 'front')
     # time.sleep(2)
     # Pantilt.Turn(dir = 'right')
     # time.sleep(2)
