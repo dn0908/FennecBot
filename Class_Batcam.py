@@ -75,6 +75,7 @@ class BatCam:
 
     def read_QRcodes(self, frame):
         codes = pyzbar.decode(frame)
+        print('reading QR in frame')
         for code in codes:
             x, y , w, h = code.rect
             self.qr_x = (2*x+w)/2
@@ -301,8 +302,8 @@ class BatCam:
 
         while True:
             ret, frame = cap.read()
-            # frame = cv2.resize(frame, (640, 480)) #resize cap for model input
-
+            frame = cv2.resize(frame, (640, 480)) #resize cap for model input
+            # frame = cv2.resize(frame, (1280, 960))
             # Check if frame read is valid
             if not ret:
                 print("Failed to grab frame.")
@@ -316,15 +317,15 @@ class BatCam:
                     prev_code_info = self.code_info
                     frame = cv2.resize(frame, (1280, 960))
                     self.code_info = self.read_QRcodes(frame)
-                    if self.code_info != prev_code_info:
-                        QR_toggle = 0
-                        break
+                    # if self.code_info != prev_code_info:
+                    #     QR_toggle = 0
+                    #     break
 
                 if yolo_toggle != 0:
-                    frame = cv2.resize(frame, (640, 480))
+                    # frame = cv2.resize(frame, (640, 480))
                     #self.x1, self.y1, self.x2, self.y2, self.class_name = self.yolo_detection(frame)
                     self.yolo_list = self.multiple_yolo_detection(frame)
-                    #break
+                    break
 
                 if BF_toggle != 0:
                     self.BF_data = self.save_BF()

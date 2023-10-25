@@ -182,8 +182,8 @@ class PanTilt:
     def Turn(self, dir = ""):
         if dir == "front":
             # goal pos to FRONT
-            pan_position = 2000 #1940
-            tilt_position = 2100 #2300
+            pan_position = 1940 #1940
+            tilt_position = 2300 #2300
 
             self.write_goal_position(self.PAN_ID, pan_position)
             self.write_goal_position(self.TILT_ID, tilt_position)
@@ -257,12 +257,12 @@ if __name__=="__main__":
     # max down 2300
 
     # for motor moving teset
-    # Pantilt.MotorController(3300,2300)
-    # Pantilt.Turn(dir = 'front')
+    Pantilt.MotorController(1800,2300)
+    #Pantilt.Turn(dir = 'front')
     # time.sleep(2)
     # Pantilt.Turn(dir = 'left')
     # time.sleep(2)
-    Pantilt.Turn(dir = 'taskB')
+    #Pantilt.Turn(dir = 'taskB')
     # time.sleep(2)
     # Pantilt.Turn(dir = 'right')
     # time.sleep(2)

@@ -11,7 +11,6 @@ from Class_RealSense import *
 from Class_ScoutMini import *
 from Class_PanTilt import *
 from Class_Batcam import *
-#from Class_Batcam_LpointVER import *
 import datetime
 import os
 
