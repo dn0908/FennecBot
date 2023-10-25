@@ -36,7 +36,7 @@ camera_settings = {
     "x_cal": -0.02,
     "y_cal": 0.02,
     "index_l_channel": 0, # This could be 0 or 1
-    "index_l": "21,580"
+    "index_l": "1199,0"
     # Two points of Listening Point, 
     # if you send index_l_channel to 0, you can get sound of 20th point,
     # if you send index_l_channel to 1, you can get sound of 580th point.

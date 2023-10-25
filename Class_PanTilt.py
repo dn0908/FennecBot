@@ -224,6 +224,21 @@ class PanTilt:
                     % (self.PAN_ID, pan_position, pan_present_position, self.TILT_ID, tilt_position, tilt_present_position))
                 if abs(pan_present_position - pan_position) <= self.error_threshold and abs(tilt_present_position - tilt_position) <= self.error_threshold:
                     break
+
+        if dir == "taskB":
+            # goal pos to LEFT
+            pan_position = 1600 #3650 ,2960 #############################################
+            tilt_position = 2300 #2300 #############################################
+
+            self.write_goal_position(self.PAN_ID, pan_position)
+            self.write_goal_position(self.TILT_ID, tilt_position)
+            while True:
+                pan_present_position = self.read_present_position(self.PAN_ID)
+                tilt_present_position = self.read_present_position(self.TILT_ID)
+                print("[ID:%03d] GoalPos:%03d PresentPos:%03d [ID:%03d] GoalPos:%03d PresentPos:%03d" \
+                    % (self.PAN_ID, pan_position, pan_present_position, self.TILT_ID, tilt_position, tilt_present_position))
+                if abs(pan_present_position - pan_position) <= self.error_threshold and abs(tilt_present_position - tilt_position) <= self.error_threshold:
+                    break
         
         else :
             print("turn dir blank")
@@ -247,7 +262,7 @@ if __name__=="__main__":
     # time.sleep(2)
     # Pantilt.Turn(dir = 'left')
     # time.sleep(2)
-    Pantilt.Turn(dir = 'front')
+    Pantilt.Turn(dir = 'taskB')
     # time.sleep(2)
     # Pantilt.Turn(dir = 'right')
     # time.sleep(2)

@@ -12,11 +12,14 @@ from Class_ScoutMini import *
 from Class_PanTilt import *
 from Class_Batcam import *
 #from Class_Batcam_LpointVER import *
+import datetime
+import os
+
 
 class MainController:
     def __init__(self):
 
-        self.task = 'A' # init task set to 'A'
+        self.task = 'B' # init task set to 'A'
         self.Scoutmini = ScoutMini()
         self.Realsense = RealSense()
         self.Pantilt = PanTilt()
@@ -107,7 +110,7 @@ class MainController:
                     self.Scoutmini.move(linear_velocity, angular_velocity)
                     if self.Realsense.read_QRcodes(frame) == 'B':
                         self.Scoutmini.move(0, 0)
-                        self.Pantilt.Turn(dir = 'front')
+                        self.Pantilt.Turn(dir = 'taskB')
                         Task = 1
                 elif Task == 1: # Find target point
                     print(f"Task {self.task} - subtask {Task} ongoing")
@@ -150,6 +153,7 @@ class MainController:
                     self.Scoutmini.move(linear_velocity, angular_velocity)
                     if self.Realsense.read_QRcodes(frame) == 'C':
                         self.Scoutmini.move(0, 0)
+                        self.Pantilt.Turn(dir = 'front') # Batcam to front
                         # self.Pantilt.MotorController(pan_angle= 0, tilt_angle= 0)
                         Task = 1
                         
@@ -210,7 +214,7 @@ class MainController:
                     data_folder = "Fullscan_" + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                     os.makedirs(data_folder, exist_ok=True)
 
-                    for point in range(1200):
+                    for point in range(1199):
                         print(f"Changing Listening Point to {point}")
                         self.Batcam.change_LPoint(point)
                         
