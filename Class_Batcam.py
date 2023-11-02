@@ -340,9 +340,9 @@ class BatCam:
                     #add for practice
                     #self.read_QRcodes(frame)
                     self.code_info = self.read_QRcodes(frame)
-                    # if self.code_info != prev_code_info:
-                    #     QR_toggle = 0
-                    #     break
+                    if self.code_info != prev_code_info:
+                        QR_toggle = 0
+                        break
 
                 if yolo_toggle != 0:
                     # frame = cv2.resize(frame, (640, 480))
