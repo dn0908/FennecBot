@@ -116,7 +116,6 @@ class MainController:
                     self.Batcam.rtsp_to_opencv(QR_toggle=1)
                     self.Pantilt.Move2Target(self.Batcam.qr_x, self.Batcam.qr_y)
                     
-                    
                     '''
                     pix2ang_constant = 340 / 800
                     error_x = (self.Pantilt.center_x - self.Batcam.qr_x)*pix2ang_constant
