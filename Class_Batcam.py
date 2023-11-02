@@ -74,21 +74,38 @@ class BatCam:
 
 
     def read_QRcodes(self, frame):
+        # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        # clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+        # equalized = clahe.apply(gray)
         codes = pyzbar.decode(frame)
-        print('reading QR in frame')
         for code in codes:
             x, y , w, h = code.rect
             self.qr_x = (2*x+w)/2
             self.qr_y = (2*y+h)/2
             self.code_info = code.data.decode('utf-8')
-            # make bounding box around code
-            cv2.rectangle(frame, (x, y),(x+w, y+h), (0, 255, 0), 2)
-            # display info text
+            
+            cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
             font = cv2.FONT_HERSHEY_DUPLEX
             cv2.putText(frame, self.code_info, (x + 6, y - 6), font, 2.0, (255, 255, 255), 1)
             print(f"QR code info : {self.code_info}, Center x : {self.qr_x}, Center y : {self.qr_y}")
         
         return self.code_info
+        
+        # codes = pyzbar.decode(gray_frame)
+        # print('reading QR in frame')
+        # for code in codes:
+        #     x, y , w, h = code.rect
+        #     self.qr_x = (2*x+w)/2
+        #     self.qr_y = (2*y+h)/2
+        #     self.code_info = code.data.decode('utf-8')
+        #     # make bounding box around code
+        #     cv2.rectangle(frame, (x, y),(x+w, y+h), (0, 255, 0), 2)
+        #     # display info text
+        #     font = cv2.FONT_HERSHEY_DUPLEX
+        #     cv2.putText(frame, self.code_info, (x + 6, y - 6), font, 2.0, (255, 255, 255), 1)
+        #     print(f"QR code info : {self.code_info}, Center x : {self.qr_x}, Center y : {self.qr_y}")
+        
+        # return self.code_info
         
     def yolo_detection(self, webcam_frame):
         # Convert the webcam frame from BGR to RGB and reshape for model input
@@ -100,7 +117,7 @@ class BatCam:
         # Extract tensor from results tuple
         detections = results[0]
 
-        # Assuming there's a confidence threshold you want to apply
+        # Assuming there's a conf9idence threshold you want to apply
         conf_thresh = 0.10
         # Use the confidence score to filter out weak detections
         mask = detections[0, :, 4] > conf_thresh
@@ -302,7 +319,9 @@ class BatCam:
 
         while True:
             ret, frame = cap.read()
-            frame = cv2.resize(frame, (640, 480)) #resize cap for model input
+            frame = cv2.resize(frame, (640, 480)) #resize cap for modelq input
+            #add for practice
+            # self.read_QRcodes(frame)
             # frame = cv2.resize(frame, (1280, 960))
             # Check if frame read is valid
             if not ret:
@@ -315,7 +334,11 @@ class BatCam:
                 
                 if QR_toggle != 0:
                     prev_code_info = self.code_info
+                    
                     frame = cv2.resize(frame, (1280, 960))
+                     
+                    #add for practice
+                    #self.read_QRcodes(frame)
                     self.code_info = self.read_QRcodes(frame)
                     # if self.code_info != prev_code_info:
                     #     QR_toggle = 0
@@ -333,7 +356,8 @@ class BatCam:
                     break
 
                 startTime = time.time() # reset time
-                
+                #add for practice
+            #gray = cv2.cvtColor(frame, cv2.COLOR_BAYER_BG2GRAY)   
             cv2.imshow('Batcam Capture',frame)
             if cv2.waitKey(500) == ord('q'):
                 break

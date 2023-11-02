@@ -14,7 +14,7 @@ from Class_Batcam import *
 
 class MainController:
     def __init__(self):
-        self.task = 'A'
+        self.task = 'B'
         self.Scoutmini = ScoutMini()
         self.Realsense = RealSense()
         self.Pantilt = PanTilt()
@@ -103,7 +103,7 @@ class MainController:
                     self.Scoutmini.move(linear_velocity, angular_velocity)
                     if self.Realsense.read_QRcodes(frame) == 'B':
                         self.Scoutmini.move(0, 0)
-                        self.Pantilt.Turn(dir = 'left')
+                        self.Pantilt.Turn(dir = 'taskB')
                         Task = 1
                 elif Task == 1: # Find target point
                     print(f"Task {self.task} - subtask {Task} ongoing")

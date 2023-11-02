@@ -93,8 +93,8 @@ class RealSense:
             mask = cv2.inRange(hsv, self.lower_hsv, self.upper_hsv) 
             contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-            cv2.imshow("realsense rgb video", frame)
-            #cv2.imshow('RealSense', mask)
+            # cv2.imshow("realsense rgb video", frame)
+            cv2.imshow('RealSense', mask)
             key = cv2.waitKey(10) & 0xFF
             if key == ord('q'):
                 break

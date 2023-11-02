@@ -227,7 +227,7 @@ class PanTilt:
 
         if dir == "taskB":
             # goal pos to LEFT
-            pan_position = 1600 #3650 ,2960 #############################################
+            pan_position = 1500 #3650 ,2960 #############################################
             tilt_position = 2300 #2300 #############################################
 
             self.write_goal_position(self.PAN_ID, pan_position)
