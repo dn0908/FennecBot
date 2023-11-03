@@ -72,7 +72,7 @@ class MainController:
         |      E     |       o        |   o  |     o    |  o   |   o    |    o     |   o  | Full
         
         '''
-        Task = 0
+        Task = 1
         
         while True:
             frames = self.Realsense.pipeline.wait_for_frames() 
@@ -117,7 +117,7 @@ class MainController:
                     self.Pantilt.Move2Target(self.Batcam.qr_x, self.Batcam.qr_y)
                     
                     '''
-                    pix2ang_constant = 340 / 800
+                    pix2ang_constant = 340 / 640
                     error_x = (self.Pantilt.center_x - self.Batcam.qr_x)*pix2ang_constant
                     error_y = (self.Pantilt.center_y - self.Batcam.qr_y)*pix2ang_constant
                     step_size = 10
@@ -211,7 +211,7 @@ class MainController:
                     ##### FOR LPOINT CHANGING & FULL SCAN #####
                     data_folder = "Fullscan_" + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                     os.makedirs(data_folder, exist_ok=True)
-
+                    os.path.join(data_folder)
                     for point in range(1199):
                         print(f"Changing Listening Point to {point}")
                         self.Batcam.change_LPoint(point)

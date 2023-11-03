@@ -144,7 +144,7 @@ class PanTilt:
             tilt_position = tilt_present_position
 
             # pix2ang_constant = 340 / 800
-            pix2ang_constant = 340 / 320
+            pix2ang_constant = 340 / 640
             error_x = (self.center_x - target_x)*pix2ang_constant
             error_y = (self.center_y - target_y)*pix2ang_constant
 
