@@ -257,12 +257,12 @@ if __name__=="__main__":
     # max down 2300
 
     # for motor moving teset
-    Pantilt.MotorController(1800,2300)
-    #Pantilt.Turn(dir = 'front')
+    # Pantilt.MotorController(1800,2300)
+    Pantilt.Turn(dir = 'front')
     # time.sleep(2)
     # Pantilt.Turn(dir = 'left')
     # time.sleep(2)
-    #Pantilt.Turn(dir = 'taskB')
+    # Pantilt.Turn(dir = 'taskB')
     # time.sleep(2)
     # Pantilt.Turn(dir = 'right')
     # time.sleep(2)

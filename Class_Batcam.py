@@ -319,11 +319,8 @@ class BatCam:
 
         while True:
             ret, frame = cap.read()
-            frame = cv2.resize(frame, (640, 480)) #resize cap for modelq input
-            #add for practice
-            # self.read_QRcodes(frame)
-            # frame = cv2.resize(frame, (1280, 960))
-            # Check if frame read is valid
+            frame = cv2.resize(frame, (640, 480)) #resize cap for model input
+
             if not ret:
                 print("Failed to grab frame.")
                 continue
@@ -335,10 +332,8 @@ class BatCam:
                 if QR_toggle != 0:
                     prev_code_info = self.code_info
                     
-                    frame = cv2.resize(frame, (1280, 960))
-                     
-                    #add for practice
-                    #self.read_QRcodes(frame)
+                    # frame = cv2.resize(frame, (1280, 960))
+                    
                     self.code_info = self.read_QRcodes(frame)
                     if self.code_info != prev_code_info:
                         QR_toggle = 0
@@ -356,8 +351,8 @@ class BatCam:
                     break
 
                 startTime = time.time() # reset time
-                #add for practice
-            #gray = cv2.cvtColor(frame, cv2.COLOR_BAYER_BG2GRAY)   
+
+              
             cv2.imshow('Batcam Capture',frame)
             if cv2.waitKey(500) == ord('q'):
                 break
