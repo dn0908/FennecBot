@@ -211,7 +211,8 @@ class MainController:
                     ##### FOR LPOINT CHANGING & FULL SCAN #####
                     data_folder = "Fullscan_" + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                     os.makedirs(data_folder, exist_ok=True)
-                    os.path.join(data_folder)
+                    os.chdir(data_folder) # move into data folder
+                    
                     for point in range(1199):
                         print(f"Changing Listening Point to {point}")
                         self.Batcam.change_LPoint(point)
@@ -219,8 +220,9 @@ class MainController:
                         time.sleep(5)  # Adjust the delay as needed
                         
                         self.Batcam.rtsp_to_opencv(BF_toggle=1)
-                        #######################################
-
+                    
+                    os.chdir('/home/smi/FennecBot') # get out from data folder
+                    ############################################
                     
                     # for i in range(0,100):
                     #     for j in range(0,50):
