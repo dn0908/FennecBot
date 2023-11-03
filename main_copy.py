@@ -72,7 +72,7 @@ class MainController:
         |      E     |       o        |   o  |     o    |  o   |   o    |    o     |   o  | Full
         
         '''
-        Task = 1
+        Task = 0
         
         while True:
             frames = self.Realsense.pipeline.wait_for_frames() 
