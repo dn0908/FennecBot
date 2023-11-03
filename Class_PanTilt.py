@@ -165,6 +165,7 @@ class PanTilt:
 
                 # control motors
                 self.MotorController(int(pan_position), int(tilt_position))
+                
 
     def close_port(self):
         # disable torque for all motors
