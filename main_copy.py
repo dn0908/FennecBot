@@ -72,7 +72,7 @@ class MainController:
         |      E     |       o        |   o  |     o    |  o   |   o    |    o     |   o  | Full
         
         '''
-        Task = 0
+        Task = 1
         
         while True:
             frames = self.Realsense.pipeline.wait_for_frames() 
@@ -112,6 +112,7 @@ class MainController:
                         self.Pantilt.Turn(dir = 'taskB')
                         Task = 1
                 elif Task == 1: # Find target point
+                    self.Pantilt.Turn(dir = 'front')
                     print(f"Task {self.task} - subtask {Task} ongoing")
                     self.Batcam.rtsp_to_opencv(QR_toggle=1)
                     self.Pantilt.Move2Target(self.Batcam.qr_x, self.Batcam.qr_y)
