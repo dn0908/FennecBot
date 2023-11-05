@@ -77,6 +77,7 @@ class BatCam:
         # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         # clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
         # equalized = clahe.apply(gray)
+        frame = cv2.resize(frame, (1600, 1200))
         codes = pyzbar.decode(frame)
         for code in codes:
             x, y , w, h = code.rect
@@ -332,7 +333,7 @@ class BatCam:
                 if QR_toggle != 0:
                     prev_code_info = self.code_info
                     
-                    # frame = cv2.resize(frame, (1280, 960))
+                    # frame = cv2.resize(frame, (1600, 1200))
                     
                     self.code_info = self.read_QRcodes(frame)
                     if self.code_info != prev_code_info:

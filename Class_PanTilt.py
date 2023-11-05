@@ -135,7 +135,7 @@ class PanTilt:
             if abs(pan_present_position - pan_position) <= self.error_threshold and abs(tilt_present_position - tilt_position) <= self.error_threshold:
                 break
 
-    def Move2Target(self, target_x, target_y):
+    def Move2Target(self, target_x=0, target_y=0):
             # Read present positions from motors
             pan_present_position = self.read_present_position(self.PAN_ID)
             tilt_present_position = self.read_present_position(self.TILT_ID)
@@ -166,6 +166,7 @@ class PanTilt:
 
                 # control motors
                 self.MotorController(int(pan_position), int(tilt_position))
+
                 
 
     def close_port(self):
@@ -260,7 +261,7 @@ if __name__=="__main__":
 
     # for motor moving teset
     # Pantilt.MotorController(1800,2300)
-    Pantilt.Turn(dir = 'front')
+    # Pantilt.Turn(dir = 'front')
     # time.sleep(2)
     # Pantilt.Turn(dir = 'left')
     # time.sleep(2)
@@ -270,6 +271,6 @@ if __name__=="__main__":
     # time.sleep(2)
     # Pantilt.Turn(dir = 'front')
     # Pantilt.MotorController(1940,2600)
-#     Pantilt.Move2Target()
+    # Pantilt.Move2Target(0,240)
 
     
