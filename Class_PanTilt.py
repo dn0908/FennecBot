@@ -144,7 +144,7 @@ class PanTilt:
             tilt_position = tilt_present_position
 
             # pix2ang_constant = 340 / 800
-            pix2ang_constant = 340 / 640
+            pix2ang_constant = 340 / 320
             error_x = (self.center_x - target_x)*pix2ang_constant
             error_y = (self.center_y - target_y)*pix2ang_constant
 
@@ -271,6 +271,6 @@ if __name__=="__main__":
     # time.sleep(2)
     # Pantilt.Turn(dir = 'front')
     # Pantilt.MotorController(1940,2600)
-    # Pantilt.Move2Target(0,240)
+    Pantilt.Move2Target(420,240)
 
     
