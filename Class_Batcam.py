@@ -51,7 +51,7 @@ class BatCam:
         ##### OBJECT DETECTION : CUSTOM YOLOv5 MODEL CONFIGURATION #####
         #sys.path.insert(0, "/home/smi/FennecBot/fennecbot_v05_yolov5_proto_yonsei/yolov5")
         from yolov5.models.experimental import attempt_load # Now import attempt_load
-        self.yolo_model = attempt_load('/home/smi/FennecBot/best_231016.pt') # Load the "custom" YOLOv5 model
+        self.yolo_model = attempt_load('/home/smi/FennecBot/231106_best.pt') # Load the "custom" YOLOv5 model
         self.x1, self.y1, self.x2, self.y2 = 0, 0, 0, 0
         self.class_name : str= ""
 
@@ -129,7 +129,7 @@ class BatCam:
         classes = detections[0, mask, 5].cpu().numpy().astype(np.int32)
 
         # Load class names from data.yaml
-        with open('/home/smi/FennecBot/fennecbot_v05_yolov5_proto_yonsei/yolov5/FennecBot_0812-3/data.yaml', 'r') as yaml_file:
+        with open('/home/smi/FennecBot/BATCAM-MX-Data-Labeling-1/data.yaml', 'r') as yaml_file:
             data = yaml.safe_load(yaml_file)
             self.class_names = data['names']
 
@@ -148,6 +148,7 @@ class BatCam:
 
     def multiple_yolo_detection(self, webcam_frame):
         # Convert the webcam frame from BGR to RGB and reshape for model input
+        webcam_frame = cv2.resize(webcam_frame, (640, 640))
         img = cv2.cvtColor(webcam_frame, cv2.COLOR_BGR2RGB)
         img_tensor = torch.from_numpy(img).float().permute(2, 0, 1).unsqueeze(0) / 255.0
         
@@ -194,6 +195,8 @@ class BatCam:
             
             # Print the coordinates of the detected object
             print(f"{class_name} coordinates: ({x1}, {y1}), ({x2}, {y2})")
+        
+        print('YOLO LIST :', self.yolo_list)
 
         return self.yolo_list #change to self
 
@@ -320,7 +323,7 @@ class BatCam:
 
         while True:
             ret, frame = cap.read()
-            frame = cv2.resize(frame, (640, 480)) #resize cap for model input
+            frame = cv2.resize(frame, (640, 640)) #resize cap for model input
 
             if not ret:
                 print("Failed to grab frame.")
@@ -342,9 +345,9 @@ class BatCam:
 
                 if yolo_toggle != 0:
                     # frame = cv2.resize(frame, (640, 480))
-                    #self.x1, self.y1, self.x2, self.y2, self.class_name = self.yolo_detection(frame)
-                    self.yolo_list = self.multiple_yolo_detection(frame)
-                    break
+                    self.x1, self.y1, self.x2, self.y2, self.class_name = self.yolo_detection(frame)
+                    # self.yolo_list = self.multiple_yolo_detection(frame)
+                    # break
 
                 if BF_toggle != 0:
                     self.BF_data = self.save_BF()
@@ -368,6 +371,6 @@ if __name__ == "__main__":
     # Batcam.save_BF()  
     # Batcam.leakage_detection()
     try:
-        Batcam.rtsp_to_opencv(QR_toggle = 1, yolo_toggle = 0, BF_toggle=0)
+        Batcam.rtsp_to_opencv(QR_toggle = 0, yolo_toggle = 1, BF_toggle=0)
     except Exception as error:
         logging.error(error)
