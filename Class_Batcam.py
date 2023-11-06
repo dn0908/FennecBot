@@ -323,8 +323,8 @@ class BatCam:
 
         while True:
             ret, frame = cap.read()
-            frame = cv2.resize(frame, (640, 640)) #resize cap for model input
-
+            frame = cv2.resize(frame, (640, 480)) #resize cap for model input
+            
             if not ret:
                 print("Failed to grab frame.")
                 continue
