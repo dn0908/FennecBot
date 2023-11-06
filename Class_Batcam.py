@@ -51,7 +51,7 @@ class BatCam:
         ##### OBJECT DETECTION : CUSTOM YOLOv5 MODEL CONFIGURATION #####
         #sys.path.insert(0, "/home/smi/FennecBot/fennecbot_v05_yolov5_proto_yonsei/yolov5")
         from yolov5.models.experimental import attempt_load # Now import attempt_load
-        self.yolo_model = attempt_load('/home/smi/FennecBot/231106_best.pt') # Load the "custom" YOLOv5 model
+        self.yolo_model = attempt_load('/home/smi/FennecBot/1106_2.pt') # Load the "custom" YOLOv5 model
         self.x1, self.y1, self.x2, self.y2 = 0, 0, 0, 0
         self.class_name : str= ""
 
@@ -119,7 +119,7 @@ class BatCam:
         detections = results[0]
 
         # Assuming there's a conf9idence threshold you want to apply
-        conf_thresh = 0.10
+        conf_thresh = 0.90
         # Use the confidence score to filter out weak detections
         mask = detections[0, :, 4] > conf_thresh
 
@@ -149,6 +149,7 @@ class BatCam:
     def multiple_yolo_detection(self, webcam_frame):
         # Convert the webcam frame from BGR to RGB and reshape for model input
         webcam_frame = cv2.resize(webcam_frame, (640, 640))
+        # webcam_frame = cv2.resize(webcam_frame, (1200, 900))
         img = cv2.cvtColor(webcam_frame, cv2.COLOR_BGR2RGB)
         img_tensor = torch.from_numpy(img).float().permute(2, 0, 1).unsqueeze(0) / 255.0
         
@@ -323,7 +324,7 @@ class BatCam:
 
         while True:
             ret, frame = cap.read()
-            frame = cv2.resize(frame, (640, 480)) #resize cap for model input
+            frame = cv2.resize(frame, (640, 640)) #resize cap for model input
             
             if not ret:
                 print("Failed to grab frame.")
