@@ -1,0 +1,17 @@
+names:
+- Flange
+- Flush Ring
+- GasRegulator
+- Nuts
+- Piston Valve
+- Pressure Gage
+nc: 6
+roboflow:
+  license: CC BY 4.0
+  project: batcam-mx-data-labeling
+  url: https://universe.roboflow.com/batcam-mx/batcam-mx-data-labeling/dataset/8
+  version: 8
+  workspace: batcam-mx
+test: ../test/images
+train: BATCAM-MX-Data-Labeling-8/train/images
+val: BATCAM-MX-Data-Labeling-8/valid/images
