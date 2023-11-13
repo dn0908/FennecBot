@@ -51,7 +51,7 @@ class BatCam:
         ##### OBJECT DETECTION : CUSTOM YOLOv5 MODEL CONFIGURATION #####
         #sys.path.insert(0, "/home/smi/FennecBot/fennecbot_v05_yolov5_proto_yonsei/yolov5")
         from yolov5.models.experimental import attempt_load # Now import attempt_load
-        self.yolo_model = attempt_load('/home/smi/FennecBot/1106_2.pt') # Load the "custom" YOLOv5 model
+        self.yolo_model = attempt_load('/home/smi/FennecBot/1106_4.pt') # Load the "custom" YOLOv5 model
         self.x1, self.y1, self.x2, self.y2 = 0, 0, 0, 0
         self.class_name : str= ""
 
@@ -324,7 +324,7 @@ class BatCam:
 
         while True:
             ret, frame = cap.read()
-            frame = cv2.resize(frame, (640, 640)) #resize cap for model input
+            frame = cv2.resize(frame, (640, 480)) #resize cap for model input
             
             if not ret:
                 print("Failed to grab frame.")
