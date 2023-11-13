@@ -51,7 +51,7 @@ class BatCam:
         ##### OBJECT DETECTION : CUSTOM YOLOv5 MODEL CONFIGURATION #####
         #sys.path.insert(0, "/home/smi/FennecBot/fennecbot_v05_yolov5_proto_yonsei/yolov5")
         from yolov5.models.experimental import attempt_load # Now import attempt_load
-        self.yolo_model = attempt_load('/home/smi/FennecBot/1106_4.pt') # Load the "custom" YOLOv5 model
+        self.yolo_model = attempt_load('/home/smi/FennecBot/1106_2_best.pt') # Load the "custom" YOLOv5 model
         self.x1, self.y1, self.x2, self.y2 = 0, 0, 0, 0
         self.class_name : str= ""
 
@@ -77,7 +77,7 @@ class BatCam:
         # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         # clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
         # equalized = clahe.apply(gray)
-        frame = cv2.resize(frame, (1600, 1200))
+        # frame = cv2.resize(frame, (1600, 1200))
         codes = pyzbar.decode(frame)
         for code in codes:
             x, y , w, h = code.rect
@@ -335,10 +335,8 @@ class BatCam:
                 self.frame = frame #?
                 
                 if QR_toggle != 0:
+                    frame = cv2.resize(frame, (640, 480))
                     prev_code_info = self.code_info
-                    
-                    # frame = cv2.resize(frame, (1600, 1200))
-                    
                     self.code_info = self.read_QRcodes(frame)
                     if self.code_info != prev_code_info:
                         QR_toggle = 0
@@ -372,6 +370,6 @@ if __name__ == "__main__":
     # Batcam.save_BF()  
     # Batcam.leakage_detection()
     try:
-        Batcam.rtsp_to_opencv(QR_toggle = 0, yolo_toggle = 1, BF_toggle=0)
+        Batcam.rtsp_to_opencv(QR_toggle = 1, yolo_toggle = 0, BF_toggle=0)
     except Exception as error:
         logging.error(error)

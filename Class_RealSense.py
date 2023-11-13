@@ -70,7 +70,7 @@ class RealSense:
                 pid_output = self.Kp * error + self.Ki * self.error_sum + self.Kd * error_deriv 
                 pid_output = max(-1, min(1, pid_output)) # limit the PID output to [-1, 1]
 
-                linear_velocity = 0.11 
+                linear_velocity = 0.1 
                 angular_velocity = pid_output * (-0.1) 
 
                 # print("P: ", error, " AngVel: ", angular_velocity)

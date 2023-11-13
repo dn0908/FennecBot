@@ -269,7 +269,7 @@ if __name__=="__main__":
     # time.sleep(2)
     # Pantilt.Turn(dir = 'right')
     # time.sleep(2)
-    Pantilt.Turn(dir = 'front')
+    Pantilt.Turn(dir = 'taskB')
     # Pantilt.MotorController(1940,2600)
     # Pantilt.Move2Target(420,240)
 
