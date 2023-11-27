@@ -261,8 +261,8 @@ if __name__=="__main__":
 
     # for motor moving teset
     # Pantilt.MotorController(1990,2090)
-    Pantilt.MotorController(1630,2110)
-    # Pantilt.Turn(dir = 'front')
+    # Pantilt.MotorController(1630,2110)
+    Pantilt.Turn(dir = 'front')
     # time.sleep(2)
     # Pantilt.Turn(dir = 'left')
     # time.sleep(2)

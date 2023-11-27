@@ -1,11 +1,35 @@
 import cv2
 import torch
-from ultralytics.utils.plotting import Annotator, colors
+import argparse
+import csv
+import os
+import platform
+import sys
+from pathlib import Path
+
+import torch
+
+FILE = Path(__file__).resolve()
+ROOT = FILE.parents[0]  # YOLOv5 root directory
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))  # add ROOT to PATH
+ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
+
+from ultralytics.utils.plotting import Annotator, colors, save_one_box
+
 from yolov5.models.common import DetectMultiBackend
-from yolov5.utils.general import select_device, smart_inference_mode
-from yolov5.utils.torch_utils import scale_boxes
+from yolov5.utils.dataloaders import IMG_FORMATS, VID_FORMATS, LoadImages, LoadScreenshots, LoadStreams
 from yolov5.utils.general import (LOGGER, Profile, check_file, check_img_size, check_imshow, check_requirements, colorstr, cv2,
                            increment_path, non_max_suppression, print_args, scale_boxes, strip_optimizer, xyxy2xywh)
+from yolov5.utils.torch_utils import select_device, smart_inference_mode
+
+# from ultralytics.utils.plotting import Annotator, colors
+
+# from yolov5.models.common import DetectMultiBackend
+# from yolov5.utils.general import select_device, smart_inference_mode
+# from yolov5.utils.torch_utils import scale_boxes
+# from yolov5.utils.general import (LOGGER, Profile, check_file, check_img_size, check_imshow, check_requirements, colorstr, cv2,
+#                            increment_path, non_max_suppression, print_args, scale_boxes, strip_optimizer, xyxy2xywh)
 import time
 
 class YoloDetector:
@@ -81,8 +105,10 @@ def main():
 
     while True:
         ret, frame = cap.read()
-        frame = cv2.resize(frame, (640, 480)) #resize cap for model input
         
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame = frame.transpose((2, 0, 1))
+        frame = cv2.resize(frame, (640, 480)) #resize cap for model input
         if not ret:
             print("Failed to grab frame.")
             continue

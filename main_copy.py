@@ -18,7 +18,7 @@ import os
 class MainController:
     def __init__(self):
 
-        self.task = 'B' # init task set to 'A'
+        self.task = 'C' # init task set to 'A'
         self.Scoutmini = ScoutMini()
         self.Realsense = RealSense()
         self.Pantilt = PanTilt()
