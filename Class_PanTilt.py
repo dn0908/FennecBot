@@ -216,7 +216,7 @@ class PanTilt:
         if dir == "left":
             # goal pos to LEFT
             pan_position = 2350 #3650 ,2960
-            tilt_position = 2100 #2300
+            tilt_position = 2300 #2300
 
             self.write_goal_position(self.PAN_ID, pan_position)
             self.write_goal_position(self.TILT_ID, tilt_position)
@@ -260,7 +260,8 @@ if __name__=="__main__":
     # max down 2300
 
     # for motor moving teset
-    # Pantilt.MotorController(1800,2300)
+    # Pantilt.MotorController(1990,2090)
+    Pantilt.MotorController(1630,2110)
     # Pantilt.Turn(dir = 'front')
     # time.sleep(2)
     # Pantilt.Turn(dir = 'left')
@@ -269,7 +270,7 @@ if __name__=="__main__":
     # time.sleep(2)
     # Pantilt.Turn(dir = 'right')
     # time.sleep(2)
-    Pantilt.Turn(dir = 'taskB')
+    # Pantilt.Turn(dir = 'taskB')
     # Pantilt.MotorController(1940,2600)
     # Pantilt.Move2Target(420,240)
 

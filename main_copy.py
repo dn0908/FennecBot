@@ -119,7 +119,7 @@ class MainController:
                     '''
                     pix2ang_constant = 340 / 640
                     error_x = (self.Pantilt.center_x - self.Batcam.qr_x)*pix2ang_constant
-                    error_y = (self.Pantilt.center_y - self.Batcam.qr_y)*pix2ang_constant
+                    error_y = (self.Pantilt.center_y - self.Batcam.qr_y)*pix2ang_constan9494t
                     step_size = 10
                     while(1):
                         pan_present_position = self.Pantilt.read_present_position(self.Pantilt.PAN_ID)
@@ -136,7 +136,7 @@ class MainController:
                     
                     if self.Batcam.code_info == 'B':
                         Task = 2
-                elif Task == 2: # Collect BF data
+                elif Task == 2: # Collect BF data94
                     print(f"Task {self.task} - subtask {Task} ongoing")
                     self.Batcam.rtsp_to_opencv(BF_toggle=1)
                     Task = 0

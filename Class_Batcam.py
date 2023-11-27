@@ -51,7 +51,7 @@ class BatCam:
         ##### OBJECT DETECTION : CUSTOM YOLOv5 MODEL CONFIGURATION #####
         #sys.path.insert(0, "/home/smi/FennecBot/fennecbot_v05_yolov5_proto_yonsei/yolov5")
         from yolov5.models.experimental import attempt_load # Now import attempt_load
-        self.yolo_model = attempt_load('/home/smi/FennecBot/1106_2_best.pt') # Load the "custom" YOLOv5 model
+        self.yolo_model = attempt_load('/home/smi/FennecBot/Batcam_231113_yolo/1113_best.pt') # Load the "custom" YOLOv5 model
         self.x1, self.y1, self.x2, self.y2 = 0, 0, 0, 0
         self.class_name : str= ""
 
@@ -110,6 +110,7 @@ class BatCam:
         
     def yolo_detection(self, webcam_frame):
         # Convert the webcam frame from BGR to RGB and reshape for model input
+        # webcam_frame = cv2.resize(webcam_frame, (640, 480))
         img = cv2.cvtColor(webcam_frame, cv2.COLOR_BGR2RGB)
         img_tensor = torch.from_numpy(img).float().permute(2, 0, 1).unsqueeze(0) / 255.0
         
@@ -119,7 +120,7 @@ class BatCam:
         detections = results[0]
 
         # Assuming there's a conf9idence threshold you want to apply
-        conf_thresh = 0.90
+        conf_thresh = 0.80
         # Use the confidence score to filter out weak detections
         mask = detections[0, :, 4] > conf_thresh
 
@@ -129,7 +130,7 @@ class BatCam:
         classes = detections[0, mask, 5].cpu().numpy().astype(np.int32)
 
         # Load class names from data.yaml
-        with open('/home/smi/FennecBot/BATCAM-MX-Data-Labeling-1/data.yaml', 'r') as yaml_file:
+        with open('/home/smi/FennecBot/Batcam_231113_yolo/data.yaml', 'r') as yaml_file:
             data = yaml.safe_load(yaml_file)
             self.class_names = data['names']
 
@@ -172,7 +173,7 @@ class BatCam:
         classes = detections[0, mask, 5].cpu().numpy().astype(np.int32)
 
         # Load class names from data.yaml
-        with open('/home/smi/FennecBot/BATCAM-MX-Data-Labeling-1/data.yaml', 'r') as yaml_file:
+        with open('/home/smi/FennecBot/Batcam_231113_yolo/data.yaml', 'r') as yaml_file:
             data = yaml.safe_load(yaml_file)
             self.class_names = data['names']
 
@@ -343,7 +344,7 @@ class BatCam:
                         break
 
                 if yolo_toggle != 0:
-                    # frame = cv2.resize(frame, (640, 480))
+                    frame = cv2.resize(frame, (640, 480))
                     self.x1, self.y1, self.x2, self.y2, self.class_name = self.yolo_detection(frame)
                     # self.yolo_list = self.multiple_yolo_detection(frame)
                     # break
