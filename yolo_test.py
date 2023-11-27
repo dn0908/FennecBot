@@ -9,8 +9,8 @@ from yolov5.utils.general import (LOGGER, Profile, check_file, check_img_size, c
 import time
 
 class YoloDetector:
-    def __init__(self, weights='yolov5s.pt', device='', dnn=False, data='coco128.yaml', fp16=False,
-                 imgsz=[640], conf_thres=0.25, iou_thres=0.45, max_det=1000,
+    def __init__(self, weights='1106_2_best.pt', device='', dnn=False, data='data.yaml', fp16=False,
+                 imgsz=[640], conf_thres=0.5, iou_thres=0.45, max_det=1000,
                  line_thickness=3, hide_labels=False, hide_conf=False, half=False, vid_stride=1):
         self.weights = weights
         self.device = device
@@ -92,7 +92,7 @@ def main():
 
             bounding_box_frame, bounding_box_centers = detector.run(frame)
             print(bounding_box_centers)
-            
+
             startTime = time.time() # reset time
 
             
