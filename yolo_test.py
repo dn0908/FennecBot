@@ -1,9 +1,12 @@
 import cv2
 import torch
 from ultralytics.utils.plotting import Annotator, colors
-from models.common import DetectMultiBackend
-from utils.general import select_device, smart_inference_mode
-from utils.torch_utils import scale_boxes
+from yolov5.models.common import DetectMultiBackend
+from yolov5.utils.general import select_device, smart_inference_mode
+from yolov5.utils.torch_utils import scale_boxes
+from yolov5.utils.general import (LOGGER, Profile, check_file, check_img_size, check_imshow, check_requirements, colorstr, cv2,
+                           increment_path, non_max_suppression, print_args, scale_boxes, strip_optimizer, xyxy2xywh)
+import time
 
 class YoloDetector:
     def __init__(self, weights='yolov5s.pt', device='', dnn=False, data='coco128.yaml', fp16=False,
@@ -69,14 +72,37 @@ class YoloDetector:
 def main():
     detector = YoloDetector()
 
-    # Example usage with a video file
-    cap = cv2.VideoCapture(0)
+    RTSP_URL = "rtsp:/192.168.2.2:8554/raw"
+    fpsLimit = 1 # limitq
+    startTime = time.time()
+    # logging.info(f' Trying to connect to {self.RTSP_URL}...')
+
+    cap = cv2.VideoCapture(RTSP_URL, cv2.CAP_FFMPEG)
+
     while True:
         ret, frame = cap.read()
+        frame = cv2.resize(frame, (640, 480)) #resize cap for model input
+        
         if not ret:
-            break
+            print("Failed to grab frame.")
+            continue
 
-        bounding_box_frame, bounding_box_centers = detector.run(frame)
+        nowTime = time.time()
+        if (nowTime - startTime) >= fpsLimit:
+
+            bounding_box_frame, bounding_box_centers = detector.run(frame)
+            print(bounding_box_centers)
+            
+            startTime = time.time() # reset time
+
+            
+        cv2.imshow('Batcam Capture',bounding_box_frame)
+        if cv2.waitKey(500) == ord('q'):
+            break
+            
+    cap.release()
+    cv2.destroyAllWindows()
+
 
 
 if __name__ == '__main__':
