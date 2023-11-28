@@ -51,7 +51,7 @@ class BatCam:
         ##### OBJECT DETECTION : CUSTOM YOLOv5 MODEL CONFIGURATION #####
         #sys.path.insert(0, "/home/smi/FennecBot/fennecbot_v05_yolov5_proto_yonsei/yolov5")
         from yolov5.models.experimental import attempt_load # Now import attempt_load
-        self.yolo_model = attempt_load('/home/smi/FennecBot/Batcam_231113_yolo/1113_best.pt') # Load the "custom" YOLOv5 model
+        self.yolo_model = attempt_load('/home/smi/FennecBot/1106_2_best.pt') # Load the "custom" YOLOv5 model
         self.x1, self.y1, self.x2, self.y2 = 0, 0, 0, 0
         self.class_name : str= ""
 
@@ -130,7 +130,7 @@ class BatCam:
         classes = detections[0, mask, 5].cpu().numpy().astype(np.int32)
 
         # Load class names from data.yaml
-        with open('/home/smi/FennecBot/Batcam_231113_yolo/data.yaml', 'r') as yaml_file:
+        with open('/home/smi/FennecBot/data.yaml', 'r') as yaml_file:
             data = yaml.safe_load(yaml_file)
             self.class_names = data['names']
 
@@ -145,6 +145,56 @@ class BatCam:
             print(f"{self.class_name} coordinates: ({x1}, {y1}), ({x2}, {y2})")
 
         return self.x1,self.y1, self.x2, self.y2, self.class_name #change to self
+    
+
+    def yolo_detection2(self, webcam_frame):
+        # Resize frame to the expected input size of the YOLO model
+        # If the model was trained on 640x640 images, resize accordingly
+        resized_frame = cv2.resize(webcam_frame, (640, 640))
+
+        # Convert the resized frame from BGR to RGB (if the model was trained on RGB images)
+        img = cv2.cvtColor(resized_frame, cv2.COLOR_BGR2RGB)
+        img_tensor = torch.from_numpy(img).float().permute(2, 0, 1).unsqueeze(0) / 255.0
+
+        # Pass the frame through the YOLOv5 model
+        results = self.yolo_model(img_tensor)
+        # Extract tensor from results tuple
+        detections = results[0]
+
+        # Apply confidence threshold
+        conf_thresh = 0.80
+        mask = detections[0, :, 4] > conf_thresh
+
+        # Extract the boxes, scores, and classes from the detections
+        boxes = detections[0, mask, :4].cpu().numpy()
+        scores = detections[0, mask, 4].cpu().numpy()
+        classes = detections[0, mask, 5].cpu().numpy().astype(np.int32)
+
+        # Load class names from data.yaml
+        with open('/home/smi/FennecBot/data.yaml', 'r') as yaml_file:
+            data = yaml.safe_load(yaml_file)
+            class_names = data['names']
+
+        # Scale factor for bounding boxes (from resized to original size)
+        scale_x = webcam_frame.shape[1] / 640
+        scale_y = webcam_frame.shape[0] / 640
+
+        # Draw the bounding boxes and labels on the original frame
+        for box, score, class_idx in zip(boxes, scores, classes):
+            x1, y1, x2, y2 = box
+            x1, x2 = x1 * scale_x, x2 * scale_x
+            y1, y2 = y1 * scale_y, y2 * scale_y
+            x1, y1, x2, y2 = map(int, [x1, y1, x2, y2])
+
+            class_name = class_names[class_idx]
+            cv2.rectangle(webcam_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            cv2.putText(webcam_frame, f"{class_name}: {score:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+            # Print the coordinates of the detected object
+            print(f"{class_name} coordinates: ({x1}, {y1}), ({x2}, {y2})")
+
+        return webcam_frame
+
 
 
     def multiple_yolo_detection(self, webcam_frame):
@@ -346,6 +396,7 @@ class BatCam:
                 if yolo_toggle != 0:
                     frame = cv2.resize(frame, (640, 480))
                     self.x1, self.y1, self.x2, self.y2, self.class_name = self.yolo_detection(frame)
+                    frame = self.yolo_detection2(frame)
                     # self.yolo_list = self.multiple_yolo_detection(frame)
                     # break
 
@@ -371,6 +422,6 @@ if __name__ == "__main__":
     # Batcam.save_BF()  
     # Batcam.leakage_detection()
     try:
-        Batcam.rtsp_to_opencv(QR_toggle = 1, yolo_toggle = 0, BF_toggle=0)
+        Batcam.rtsp_to_opencv(QR_toggle = 0, yolo_toggle = 1, BF_toggle=0)
     except Exception as error:
         logging.error(error)

@@ -75,12 +75,18 @@ class YoloDetector:
         # Process predictions
         bounding_box_frame = im0.copy()
         bounding_box_center_coordinates_list = []
+        print(im.shape)
 
         for det in pred[0]:
             if len(det):
+                # det has the format [x1, y1, x2, y2, conf, cls]
                 det[:, :4] = scale_boxes(im.shape[2:], det[:, :4], im0.shape).round()
 
-                for *xyxy, _, cls in reversed(det):
+                print("det.shape:", det.shape)
+                print("det[:, :4].shape:", det[:, :4].shape)
+                print("im0.shape:", im0.shape)
+
+                for *xyxy, conf, cls in reversed(det):
                     c = int(cls)
                     label = None if self.hide_labels else (self.model.names[c] if self.hide_conf else f'{self.model.names[c]}')
                     annotator = Annotator(bounding_box_frame, line_width=self.line_thickness, example=str(self.model.names))
@@ -90,6 +96,7 @@ class YoloDetector:
                     center_x = (xyxy[0] + xyxy[2]) / 2
                     center_y = (xyxy[1] + xyxy[3]) / 2
                     bounding_box_center_coordinates_list.append((center_x, center_y))
+
 
         return bounding_box_frame, bounding_box_center_coordinates_list
 
@@ -107,8 +114,9 @@ def main():
         ret, frame = cap.read()
         
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        frame = frame.transpose((2, 0, 1))
+        
         frame = cv2.resize(frame, (640, 480)) #resize cap for model input
+        frame = frame.transpose((2, 0, 1))
         if not ret:
             print("Failed to grab frame.")
             continue
