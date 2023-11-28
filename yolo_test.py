@@ -1,143 +1,114 @@
+### importing required libraries
+import torch
 import cv2
-import torch
-import argparse
-import csv
-import os
-import platform
-import sys
-from pathlib import Path
-
-import torch
-
-FILE = Path(__file__).resolve()
-ROOT = FILE.parents[0]  # YOLOv5 root directory
-if str(ROOT) not in sys.path:
-    sys.path.append(str(ROOT))  # add ROOT to PATH
-ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
-
-from ultralytics.utils.plotting import Annotator, colors, save_one_box
-
-from yolov5.models.common import DetectMultiBackend
-from yolov5.utils.dataloaders import IMG_FORMATS, VID_FORMATS, LoadImages, LoadScreenshots, LoadStreams
-from yolov5.utils.general import (LOGGER, Profile, check_file, check_img_size, check_imshow, check_requirements, colorstr, cv2,
-                           increment_path, non_max_suppression, print_args, scale_boxes, strip_optimizer, xyxy2xywh)
-from yolov5.utils.torch_utils import select_device, smart_inference_mode
-
-# from ultralytics.utils.plotting import Annotator, colors
-
-# from yolov5.models.common import DetectMultiBackend
-# from yolov5.utils.general import select_device, smart_inference_mode
-# from yolov5.utils.torch_utils import scale_boxes
-# from yolov5.utils.general import (LOGGER, Profile, check_file, check_img_size, check_imshow, check_requirements, colorstr, cv2,
-#                            increment_path, non_max_suppression, print_args, scale_boxes, strip_optimizer, xyxy2xywh)
 import time
 
-class YoloDetector:
-    def __init__(self, weights='1106_2_best.pt', device='', dnn=False, data='data.yaml', fp16=False,
-                 imgsz=[640], conf_thres=0.5, iou_thres=0.45, max_det=1000,
-                 line_thickness=3, hide_labels=False, hide_conf=False, half=False, vid_stride=1):
-        self.weights = weights
-        self.device = device
-        self.dnn = dnn
-        self.data = data
-        self.fp16 = fp16
-        self.imgsz = imgsz
-        self.conf_thres = conf_thres
-        self.iou_thres = iou_thres
-        self.max_det = max_det
-        self.line_thickness = line_thickness
-        self.hide_labels = hide_labels
-        self.hide_conf = hide_conf
-        self.half = half
-        self.vid_stride = vid_stride
 
-        # Load model
-        self.device = select_device(device)
-        self.model = DetectMultiBackend(weights, device=self.device, dnn=dnn, data=data, fp16=fp16)
+### -------------------------------------- function to run detection ---------------------------------------------------------
+def detectx (frame, model):
+    frame = [frame]
+    print(f"[INFO] Detecting. . . ")
+    results = model(frame)
+    # results.show()
+    # print( results.xyxyn[0])
+    # print(results.xyxyn[0][:, -1])
+    # print(results.xyxyn[0][:, :-1])
 
-    @smart_inference_mode()
-    def run(self, frame):
-        im0 = frame.copy()
+    labels, cordinates = results.xyxyn[0][:, -1], results.xyxyn[0][:, :-1]
 
-        # Inference
-        im = torch.from_numpy(frame).to(self.model.device)
-        im = im.half() if self.model.fp16 else im.float()
-        im /= 255
-        if len(im.shape) == 3:
-            im = im[None]
+    return labels, cordinates
 
-        # Run inference
-        pred = self.model(im)
+### ------------------------------------ to plot the BBox and results --------------------------------------------------------
+def plot_boxes(results, frame,classes):
 
-        # NMS
-        pred = non_max_suppression(pred, self.conf_thres, self.iou_thres, max_det=self.max_det)
+    """
+    --> This function takes results, frame and classes
+    --> results: contains labels and coordinates predicted by model on the given frame
+    --> classes: contains the strting labels
 
-        # Process predictions
-        bounding_box_frame = im0.copy()
-        bounding_box_center_coordinates_list = []
-        print(im.shape)
+    """
+    labels, cord = results
+    n = len(labels)
+    x_shape, y_shape = frame.shape[1], frame.shape[0]
 
-        for det in pred[0]:
-            if len(det):
-                # det has the format [x1, y1, x2, y2, conf, cls]
-                det[:, :4] = scale_boxes(im.shape[2:], det[:, :4], im0.shape).round()
-
-                print("det.shape:", det.shape)
-                print("det[:, :4].shape:", det[:, :4].shape)
-                print("im0.shape:", im0.shape)
-
-                for *xyxy, conf, cls in reversed(det):
-                    c = int(cls)
-                    label = None if self.hide_labels else (self.model.names[c] if self.hide_conf else f'{self.model.names[c]}')
-                    annotator = Annotator(bounding_box_frame, line_width=self.line_thickness, example=str(self.model.names))
-                    annotator.box_label(xyxy, label, color=colors(c, True))
-
-                    # Calculate and store bounding box center coordinates
-                    center_x = (xyxy[0] + xyxy[2]) / 2
-                    center_y = (xyxy[1] + xyxy[3]) / 2
-                    bounding_box_center_coordinates_list.append((center_x, center_y))
+    print(f"[INFO] Total {n} detections. . . ")
+    print(f"[INFO] Looping through all detections. . . ")
 
 
-        return bounding_box_frame, bounding_box_center_coordinates_list
+    ### looping through the detections
+    for i in range(n):
+        row = cord[i]
+        if row[4] >= 0.55: ### threshold value for detection. We are discarding everything below this value
+            print(f"[INFO] Extracting BBox coordinates. . . ")
+            x1, y1, x2, y2 = int(row[0]*x_shape), int(row[1]*y_shape), int(row[2]*x_shape), int(row[3]*y_shape) ## BBOx coordniates
+            text_d = classes[int(labels[i])]
 
-def main():
-    detector = YoloDetector()
 
-    RTSP_URL = "rtsp:/192.168.2.2:8554/raw"
-    fpsLimit = 1 # limitq
-    startTime = time.time()
-    # logging.info(f' Trying to connect to {self.RTSP_URL}...')
+            if text_d == 'Flange':
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2) ## BBox
+                cv2.rectangle(frame, (x1, y1-20), (x2, y1), (0, 255,0), -1) ## for text label background
+                cv2.putText(frame, text_d + f" {round(float(row[4]),2)}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7,(255,255,255), 2)
 
-    cap = cv2.VideoCapture(RTSP_URL, cv2.CAP_FFMPEG)
+            elif text_d == 'Nuts':
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2) ## BBox
+                cv2.rectangle(frame, (x1, y1-20), (x2, y1), (0, 255,0), -1) ## for text label background
+                cv2.putText(frame, text_d + f" {round(float(row[4]),2)}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7,(255,255,255), 2)
 
-    while True:
-        ret, frame = cap.read()
+            elif text_d == 'Flush Ring':
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0,255), 2) ## BBox
+                cv2.rectangle(frame, (x1, y1-20), (x2, y1), (0, 0,255), -1) ## for text label background
+                cv2.putText(frame, text_d + f" {round(float(row[4]),2)}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7,(255,255,255), 2)
+
+            elif text_d == 'GasRegulator':
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0,255), 2) ## BBox
+                cv2.rectangle(frame, (x1, y1-20), (x2, y1), (0, 0,255), -1) ## for text label background
+                cv2.putText(frame, text_d + f" {round(float(row[4]),2)}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7,(255,255,255), 2)
+            ## print(row[4], type(row[4]),int(row[4]), len(text_d))
+
+    return frame
+
+
+print(f"[INFO] Loading model... ")
+## loading the custom trained model
+# model =  torch.hub.load('ultralytics/yolov5', 'custom', path='last.pt',force_reload=True) ## if you want to download the git repo and then run the detection
+model =  torch.hub.load('/home/smi/FennecBot', 'custom', source ='local', path='1106_2_best.pt',force_reload=True) ### The repo is stored locally
+
+classes = model.names ### class names in string format
+
+
+# Initialize the webcam capture
+RTSP_URL = "rtsp:/192.168.2.2:8554/raw"
+cap = cv2.VideoCapture(RTSP_URL, cv2.CAP_FFMPEG)
+
+
+
+
+# assert cap.isOpened()
+frame_no = 1
+
+cv2.namedWindow("vid_out", cv2.WINDOW_NORMAL)
+while True:
+    # start_time = time.time()
+    ret, frame = cap.read()
+    if ret :
+        print(f"[INFO] Working with frame {frame_no} ")
+
+        frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
+        results = detectx(frame, model = model)
+        frame = cv2.cvtColor(frame,cv2.COLOR_RGB2BGR)
+        frame = plot_boxes(results, frame,classes = classes)
         
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        
-        frame = cv2.resize(frame, (640, 480)) #resize cap for model input
-        frame = frame.transpose((2, 0, 1))
-        if not ret:
-            print("Failed to grab frame.")
-            continue
+        cv2.imshow("vid_out", frame)
+        # if vid_out:
+        #     print(f"[INFO] Saving output video. . . ")
+        #     out.write(frame)
 
-        nowTime = time.time()
-        if (nowTime - startTime) >= fpsLimit:
-
-            bounding_box_frame, bounding_box_centers = detector.run(frame)
-            print(bounding_box_centers)
-
-            startTime = time.time() # reset time
-
-            
-        cv2.imshow('Batcam Capture',bounding_box_frame)
-        if cv2.waitKey(500) == ord('q'):
+        if cv2.waitKey(5) & 0xFF == 27:
             break
-            
-    cap.release()
-    cv2.destroyAllWindows()
+        frame_no += 1
 
+print(f"[INFO] Clening up. . . ")
+### releaseing the writer
 
-
-if __name__ == '__main__':
-    main()
+## closing all windows
+cv2.destroyAllWindows()
