@@ -28,17 +28,11 @@ def plot_boxes(results, frame,classes):
     for i in range(n):
         row = cord[i]
         if row[4] >= 0.55: ### threshold
-            print(f"[INFO] Extracting BBox coordinates. . . ")
             x1, y1, x2, y2 = int(row[0]*x_shape), int(row[1]*y_shape), int(row[2]*x_shape), int(row[3]*y_shape) #coordinates
             text_d = classes[int(labels[i])]
 
 
             if text_d == 'Flange':
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                cv2.rectangle(frame, (x1, y1-20), (x2, y1), (0, 255,0), -1)
-                cv2.putText(frame, text_d + f" {round(float(row[4]),2)}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7,(255,255,255), 2)
-
-            elif text_d == 'Nuts':
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                 cv2.rectangle(frame, (x1, y1-20), (x2, y1), (0, 255,0), -1)
                 cv2.putText(frame, text_d + f" {round(float(row[4]),2)}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7,(255,255,255), 2)
@@ -52,6 +46,22 @@ def plot_boxes(results, frame,classes):
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0,255), 2)
                 cv2.rectangle(frame, (x1, y1-20), (x2, y1), (0, 0,255), -1)
                 cv2.putText(frame, text_d + f" {round(float(row[4]),2)}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7,(255,255,255), 2)
+            
+            elif text_d == 'Nuts':
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255,255), 2)
+                cv2.rectangle(frame, (x1, y1-20), (x2, y1), (0, 255,255), -1)
+                cv2.putText(frame, text_d + f" {round(float(row[4]),2)}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7,(255,255,255), 2)
+            
+            elif text_d == 'Piston Valve':
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 255,0), 2)
+                cv2.rectangle(frame, (x1, y1-20), (x2, y1), (255, 255,0), -1)
+                cv2.putText(frame, text_d + f" {round(float(row[4]),2)}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7,(255,255,255), 2)
+
+            elif text_d == 'Pressure Gage':
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0,255), 2)
+                cv2.rectangle(frame, (x1, y1-20), (x2, y1), (255, 0,255), -1)
+                cv2.putText(frame, text_d + f" {round(float(row[4]),2)}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7,(255,255,255), 2)
+
             ## print(row[4], type(row[4]),int(row[4]), len(text_d))
 
     return frame
@@ -68,24 +78,20 @@ classes = model.names ### class names in string
 RTSP_URL = "rtsp:/192.168.2.2:8554/raw"
 cap = cv2.VideoCapture(RTSP_URL, cv2.CAP_FFMPEG)
 
-
-frame_no = 1
-
-cv2.namedWindow("vid_out", cv2.WINDOW_NORMAL)
 while True:
     # start_time = time.time()
     ret, frame = cap.read()
     if ret :
-
+        frame = cv2.resize(frame, (640, 480))
         frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
         results = detect_(frame, model = model)
         frame = cv2.cvtColor(frame,cv2.COLOR_RGB2BGR)
         frame = plot_boxes(results, frame,classes = classes)
         
-        cv2.imshow("vid_out", frame)
+        cv2.imshow("Batcam Yolo", frame)
 
-        if cv2.waitKey(5) & 0xFF == 27:
+        if cv2.waitKey(500) == ord('q'):
             break
-        frame_no += 1
 
+cap.release()
 cv2.destroyAllWindows()
