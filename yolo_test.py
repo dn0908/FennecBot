@@ -16,13 +16,13 @@ def detect_(frame, model):
 
     return labels, cordinates
 
+
 def plot_boxes(results, frame,classes):
     labels, cord = results
     n = len(labels)
     x_shape, y_shape = frame.shape[1], frame.shape[0]
 
     print(f"[INFO] Total {n} detections. . . ")
-
 
     ### loop through detections
     for i in range(n):
@@ -88,7 +88,7 @@ while True:
         frame = cv2.cvtColor(frame,cv2.COLOR_RGB2BGR)
         frame = plot_boxes(results, frame,classes = classes)
         
-        cv2.imshow("Batcam Yolo", frame)
+        cv2.imshow("Batcam", frame)
 
         if cv2.waitKey(500) == ord('q'):
             break
