@@ -27,7 +27,7 @@ def plot_boxes(results, frame,classes):
     ### loop through detections
     for i in range(n):
         row = cord[i]
-        if row[4] >= 0.55: ### threshold
+        if row[4] >= 0.35: ### threshold
             x1, y1, x2, y2 = int(row[0]*x_shape), int(row[1]*y_shape), int(row[2]*x_shape), int(row[3]*y_shape) #coordinates
             text_d = classes[int(labels[i])]
 

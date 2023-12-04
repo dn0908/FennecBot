@@ -192,7 +192,7 @@ class BatCam:
 
         for i in range(n):
             row = cord[i]
-            if row[4] >= 0.55:  # Confidence threshold
+            if row[4] >= 0.25:  # Confidence threshold
                 x1, y1, x2, y2 = int(row[0]*x_shape), int(row[1]*y_shape), int(row[2]*x_shape), int(row[3]*y_shape)
                 text_d = self.class_names[int(labels[i])]
 
@@ -228,7 +228,7 @@ class BatCam:
         trigger_id = None
         count_num = 0
         data_list = []
-        print(count_num)
+        print(count_num)    
 
         ws = websocket.WebSocketApp(f"ws://{BATCAM_IP}/ws",
                                     on_open=on_open,
@@ -308,7 +308,13 @@ class BatCam:
                 features.append(stft_window)
 
             return features
+        
         X_train = []
+
+        # Dynamically get the latest CSV file in the specified folder
+        folder_path = './'
+        latest_csv_file = glob.glob(f'{folder_path}/*.csv')[-1]
+
         file_path = 'l_point_data.csv'
         class_features = extract_features_v4(file_path, self.window_size, self.stride)
         X_train.extend(class_features)
@@ -341,7 +347,7 @@ class BatCam:
         while True:
             ret, frame = cap.read()
             frame = cv2.resize(frame, (640, 480)) #resize cap for model input
-            # frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            
 
             if not ret:
                 print("Failed to grab frame.")
