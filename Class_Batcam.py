@@ -50,11 +50,12 @@ class BatCam:
 
         ##### OBJECT DETECTION : CUSTOM YOLOv5 MODEL CONFIGURATION #####
         #sys.path.insert(0, "/home/smi/FennecBot/fennecbot_v05_yolov5_proto_yonsei/yolov5")
-        from yolov5.models.experimental import attempt_load # Now import attempt_load
-        self.yolo_model = attempt_load('/home/smi/FennecBot/1106_2_best.pt') # Load the "custom" YOLOv5 model
+        # from yolov5.models.experimental import attempt_load # Now import attempt_load
+        # self.yolo_model = attempt_load('/home/smi/FennecBot/1106_2_best.pt') # Load the "custom" YOLOv5 model
         self.x1, self.y1, self.x2, self.y2 = 0, 0, 0, 0
         self.class_name : str= ""
-
+        self.yolo_model =  torch.hub.load('/home/smi/FennecBot', 'custom', source ='local', path='1106_2_best.pt',force_reload=True) ### The repo is stored locally
+        self.class_names = self.yolo_model.names ### class names in string
 
         # self.BF_data = []
         # self.FullScan_arr = []
@@ -91,167 +92,131 @@ class BatCam:
             print(f"QR code info : {self.code_info}, Center x : {self.qr_x}, Center y : {self.qr_y}")
         
         return self.code_info
-        
-        # codes = pyzbar.decode(gray_frame)
-        # print('reading QR in frame')
-        # for code in codes:
-        #     x, y , w, h = code.rect
-        #     self.qr_x = (2*x+w)/2
-        #     self.qr_y = (2*y+h)/2
-        #     self.code_info = code.data.decode('utf-8')
-        #     # make bounding box around code
-        #     cv2.rectangle(frame, (x, y),(x+w, y+h), (0, 255, 0), 2)
-        #     # display info text
-        #     font = cv2.FONT_HERSHEY_DUPLEX
-        #     cv2.putText(frame, self.code_info, (x + 6, y - 6), font, 2.0, (255, 255, 255), 1)
-        #     print(f"QR code info : {self.code_info}, Center x : {self.qr_x}, Center y : {self.qr_y}")
-        
-        # return self.code_info
-        
-    def yolo_detection(self, webcam_frame):
-        # Convert the webcam frame from BGR to RGB and reshape for model input
-        # webcam_frame = cv2.resize(webcam_frame, (640, 480))
-        img = cv2.cvtColor(webcam_frame, cv2.COLOR_BGR2RGB)
-        img_tensor = torch.from_numpy(img).float().permute(2, 0, 1).unsqueeze(0) / 255.0
-        
-        # Pass the frame through the YOLOv5 model   
-        results = self.yolo_model(img_tensor)
-        # Extract tensor from results tuple
-        detections = results[0]
 
-        # Assuming there's a conf9idence threshold you want to apply
-        conf_thresh = 0.80
-        # Use the confidence score to filter out weak detections
-        mask = detections[0, :, 4] > conf_thresh
+        
+    # def yolo_detection(self, webcam_frame):
+    #     # Record original frame size (before any resizing is done for model input)
+    #     original_frame_height, original_frame_width = webcam_frame.shape[:2]
 
-        # Extract the boxes, scores, and classes from the detections
-        boxes = detections[0, mask, :4].cpu().numpy()
-        scores = detections[0, mask, 4].cpu().numpy()
-        classes = detections[0, mask, 5].cpu().numpy().astype(np.int32)
+    #     # Resize frame to model input size (if necessary)
+    #     # Example: webcam_frame_resized = cv2.resize(webcam_frame, (640, 640))
 
-        # Load class names from data.yaml
-        with open('/home/smi/FennecBot/data.yaml', 'r') as yaml_file:
-            data = yaml.safe_load(yaml_file)
-            self.class_names = data['names']
+    #     # Convert the webcam frame from BGR to RGB and reshape for model input
+    #     img = cv2.cvtColor(webcam_frame, cv2.COLOR_BGR2RGB)
+    #     img_tensor = torch.from_numpy(img).float().permute(2, 0, 1).unsqueeze(0) / 255.0
+        
+    #     # Pass the frame through the YOLOv5 model   
+    #     results = self.yolo_model(img_tensor)
+    #     # Extract tensor from results tuple
+    #     detections = results[0]
 
-        # Draw the bounding boxes and labels on the frame
-        for box, score, class_idx in zip(boxes, scores, classes):
-            x1, y1, x2, y2 = map(int, box)
-            self.class_name = self.class_names[class_idx]
-            cv2.rectangle(webcam_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            cv2.putText(webcam_frame, f"{self.class_name}: {score:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+    #     # Assuming there's a confidence threshold you want to apply
+    #     conf_thresh = 0.80
+    #     # Use the confidence score to filter out weak detections
+    #     mask = detections[0, :, 4] > conf_thresh
+
+    #     # Extract the boxes, scores, and classes from the detections
+    #     boxes = detections[0, mask, :4].cpu().numpy()
+    #     scores = detections[0, mask, 4].cpu().numpy()
+    #     classes = detections[0, mask, 5].cpu().numpy().astype(np.int32)
+
+    #     # Load class names from data.yaml
+    #     with open('/home/smi/FennecBot/data.yaml', 'r') as yaml_file:
+    #         data = yaml.safe_load(yaml_file)
+    #         self.class_names = data['names']
+
+    #     # Draw the bounding boxes and labels on the frame
+    #     for box, score, class_idx in zip(boxes, scores, classes):
+    #         # Scale the bounding box coordinates back to the original frame's size
+    #         x1, y1, x2, y2 = box * [original_frame_width, original_frame_height, original_frame_width, original_frame_height]
+    #         x1, y1, x2, y2 = map(int, [x1, y1, x2, y2])
+
+    #         self.class_name = self.class_names[class_idx]
+    #         cv2.rectangle(webcam_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+    #         cv2.putText(webcam_frame, f"{self.class_name}: {score:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
             
-            # Print the coordinates of the detected object
-            print(f"{self.class_name} coordinates: ({x1}, {y1}), ({x2}, {y2})")
+    #         # Print the coordinates of the detected object
+    #         print(f"{self.class_name} coordinates: ({x1}, {y1}), ({x2}, {y2})")
 
-        return self.x1,self.y1, self.x2, self.y2, self.class_name #change to self
-    
-
-    def yolo_detection2(self, webcam_frame):
-        # Resize frame to the expected input size of the YOLO model
-        # If the model was trained on 640x640 images, resize accordingly
-        resized_frame = cv2.resize(webcam_frame, (640, 640))
-
-        # Convert the resized frame from BGR to RGB (if the model was trained on RGB images)
-        img = cv2.cvtColor(resized_frame, cv2.COLOR_BGR2RGB)
-        img_tensor = torch.from_numpy(img).float().permute(2, 0, 1).unsqueeze(0) / 255.0
-
-        # Pass the frame through the YOLOv5 model
-        results = self.yolo_model(img_tensor)
-        # Extract tensor from results tuple
-        detections = results[0]
-
-        # Apply confidence threshold
-        conf_thresh = 0.80
-        mask = detections[0, :, 4] > conf_thresh
-
-        # Extract the boxes, scores, and classes from the detections
-        boxes = detections[0, mask, :4].cpu().numpy()
-        scores = detections[0, mask, 4].cpu().numpy()
-        classes = detections[0, mask, 5].cpu().numpy().astype(np.int32)
-
-        # Load class names from data.yaml
-        with open('/home/smi/FennecBot/data.yaml', 'r') as yaml_file:
-            data = yaml.safe_load(yaml_file)
-            class_names = data['names']
-
-        # Scale factor for bounding boxes (from resized to original size)
-        scale_x = webcam_frame.shape[1] / 640
-        scale_y = webcam_frame.shape[0] / 640
-
-        # Draw the bounding boxes and labels on the original frame
-        for box, score, class_idx in zip(boxes, scores, classes):
-            x1, y1, x2, y2 = box
-            x1, x2 = x1 * scale_x, x2 * scale_x
-            y1, y2 = y1 * scale_y, y2 * scale_y
-            x1, y1, x2, y2 = map(int, [x1, y1, x2, y2])
-
-            class_name = class_names[class_idx]
-            cv2.rectangle(webcam_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            cv2.putText(webcam_frame, f"{class_name}: {score:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-
-            # Print the coordinates of the detected object
-            print(f"{class_name} coordinates: ({x1}, {y1}), ({x2}, {y2})")
-
-        return webcam_frame
+    #     return self.x1, self.y1, self.x2, self.y2, self.class_name #change to self
 
 
+    # def multiple_yolo_detection(self, webcam_frame):
+    #     # Resize and convert the frame for model input
+    #     original_frame_height, original_frame_width = webcam_frame.shape[:2]
+    #     webcam_frame = cv2.resize(webcam_frame, (640, 640))
+    #     frame_rgb = cv2.cvtColor(webcam_frame, cv2.COLOR_BGR2RGB)
 
-    def multiple_yolo_detection(self, webcam_frame):
-        # Convert the webcam frame from BGR to RGB and reshape for model input
-        webcam_frame = cv2.resize(webcam_frame, (640, 640))
-        # webcam_frame = cv2.resize(webcam_frame, (1200, 900))
-        img = cv2.cvtColor(webcam_frame, cv2.COLOR_BGR2RGB)
-        img_tensor = torch.from_numpy(img).float().permute(2, 0, 1).unsqueeze(0) / 255.0
-        
-        # Pass the frame through the YOLOv5 model   
-        results = self.yolo_model(img_tensor)
-        # Extract tensor from results tuple
-        detections = results[0]
+    #     # Model inference
+    #     results = self.yolo_model([frame_rgb])
+    #     labels, coordinates = results.xyxyn[0][:, -1], results.xyxyn[0][:, :-1]
 
-        # Create a list to store the results
-        self.yolo_list = []
+    #     # Storing results
+    #     self.yolo_list = []
+    #     for label, coord in zip(labels, coordinates):
+    #         if coord[4] >= 0.8:  # Confidence threshold
+    #             x1, y1, x2, y2 = coord[0:4] * [original_frame_width, original_frame_height, original_frame_width, original_frame_height]
+    #             x1, y1, x2, y2 = map(int, [x1, y1, x2, y2])
+    #             class_name = self.class_names[int(label)]
+    #             yolo_x = (x1 + x2) / 2
+    #             yolo_y = (y1 + y2) / 2
 
-        # Assuming there's a confidence threshold you want to apply
-        conf_thresh = 0.90
-        # Use the confidence score to filter out weak detections
-        mask = detections[0, :, 4] > conf_thresh
+    #             result = {
+    #                 "class_name": class_name,
+    #                 "score": coord[4],
+    #                 "x_coordinate": yolo_x,
+    #                 "y_coordinate": yolo_y
+    #             }
+    #             self.yolo_list.append(result)
 
-        # Extract the boxes, scores, and classes from the detections
-        boxes = detections[0, mask, :4].cpu().numpy()
-        scores = detections[0, mask, 4].cpu().numpy()
-        classes = detections[0, mask, 5].cpu().numpy().astype(np.int32)
+    #             # Drawing bounding boxes (optional)
+    #             cv2.rectangle(webcam_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+    #             cv2.putText(webcam_frame, f"{class_name}: {coord[4]:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-        # Load class names from data.yaml
-        with open('/home/smi/FennecBot/Batcam_231113_yolo/data.yaml', 'r') as yaml_file:
-            data = yaml.safe_load(yaml_file)
-            self.class_names = data['names']
+    #     print('YOLO LIST:', self.yolo_list)
+    #     return self.yolo_list
 
-        # Draw the bounding boxes and labels on the frame
-        for box, score, class_idx in zip(boxes, scores, classes):
-            x1, y1, x2, y2 = map(int, box)
-            class_name = self.class_names[class_idx]
+    def detect_(self, frame):
+        frame = [frame]
 
-            yolo_x = (x1 + x2) / 2
-            yolo_y = (y1 + y2) / 2
-            result = {
-                "class_name": class_name,
-                "score": score,
-                "x_coordinate": yolo_x,
-                "y_coordinate": yolo_y
-            }
-            self.yolo_list.append(result)
+        results = self.yolo_model(frame)
+        labels, coordinates = results.xyxyn[0][:, -1], results.xyxyn[0][:, :-1]
+        return labels, coordinates
 
-            cv2.rectangle(webcam_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            cv2.putText(webcam_frame, f"{self.class_name}: {score:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-            
-            # Print the coordinates of the detected object
-            print(f"{class_name} coordinates: ({x1}, {y1}), ({x2}, {y2})")
-        
-        print('YOLO LIST :', self.yolo_list)
+    def plot_boxes(self, results, frame):
+        labels, cord = results
+        n = len(labels)
+        x_shape, y_shape = frame.shape[1], frame.shape[0]
 
-        return self.yolo_list #change to self
+        print(f"[INFO] Total {n} detections. . . ")
 
+        for i in range(n):
+            row = cord[i]
+            if row[4] >= 0.55:  # Confidence threshold
+                x1, y1, x2, y2 = int(row[0]*x_shape), int(row[1]*y_shape), int(row[2]*x_shape), int(row[3]*y_shape)
+                text_d = self.class_names[int(labels[i])]
+
+                color = (0, 255, 0)  # Default color
+                if text_d == 'Flange':
+                    color = (0, 255, 0)
+                elif text_d == 'Flush Ring':
+                    color = (0, 0, 255)
+                elif text_d == 'GasRegulator':
+                    color = (0, 0, 255)
+                elif text_d == 'Nuts':
+                    color = (0, 255, 255)
+                elif text_d == 'Piston Valve':
+                    color = (255, 255, 0)
+                elif text_d == 'Pressure Gage':
+                    color = (255, 0, 255)
+
+                # Draw rectangles and text
+                cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+                cv2.rectangle(frame, (x1, y1-20), (x2, y1), color, -1)
+                cv2.putText(frame, f"{text_d} {row[4]:.2f}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,255,255), 2)
+
+        return frame
+   
 
 
     def save_BF(self):
@@ -376,7 +341,8 @@ class BatCam:
         while True:
             ret, frame = cap.read()
             frame = cv2.resize(frame, (640, 480)) #resize cap for model input
-            
+            # frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
             if not ret:
                 print("Failed to grab frame.")
                 continue
@@ -395,9 +361,12 @@ class BatCam:
 
                 if yolo_toggle != 0:
                     frame = cv2.resize(frame, (640, 480))
-                    self.x1, self.y1, self.x2, self.y2, self.class_name = self.yolo_detection(frame)
-                    frame = self.yolo_detection2(frame)
+                    # self.x1, self.y1, self.x2, self.y2, self.class_name = self.yolo_detection(frame)
+                    # frame = self.yolo_detection(frame)
                     # self.yolo_list = self.multiple_yolo_detection(frame)
+                    results = self.detect_(frame)
+                    frame = self.plot_boxes(results, frame)
+
                     # break
 
                 if BF_toggle != 0:
