@@ -32,6 +32,8 @@ import yaml
 import sys
 import time
 
+import glob
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -54,7 +56,7 @@ class BatCam:
         # self.yolo_model = attempt_load('/home/smi/FennecBot/1106_2_best.pt') # Load the "custom" YOLOv5 model
         self.x1, self.y1, self.x2, self.y2 = 0, 0, 0, 0
         self.class_name : str= ""
-        self.yolo_model =  torch.hub.load('/home/smi/FennecBot', 'custom', source ='local', path='1106_2_best.pt',force_reload=True) ### The repo is stored locally
+        self.yolo_model =  torch.hub.load('/home/smi/FennecBot/models', 'custom', source ='local', path='1106_2_best.pt',force_reload=True) ### The repo is stored locally
         self.class_names = self.yolo_model.names ### class names in string
 
         # self.BF_data = []
@@ -308,30 +310,31 @@ class BatCam:
                 features.append(stft_window)
 
             return features
-        
+
         X_train = []
 
         # Dynamically get the latest CSV file in the specified folder
-        folder_path = './'
-        latest_csv_file = glob.glob(f'{folder_path}/*.csv')[-1]
-
-        file_path = 'l_point_data.csv'
+        folder_path = '/home/smi/FennecBot/'
+        # file_path = 'l_point_data.csv'
+        file_path = glob.glob(f'{folder_path}/*.csv')[-1]
+        print("✅ Loading Model..... Reading file", file_path)
+        
         class_features = extract_features_v4(file_path, self.window_size, self.stride)
         X_train.extend(class_features)
         X_train = np.array(X_train)
-        print('Noise Input Data Shape : ',X_train.shape)
+        # print('Noise Input Data Shape : ',X_train.shape)
 
         y_pred_prob = self.noise_model.predict(X_train)
         y_pred = np.argmax(y_pred_prob, axis=1)
-        print('Predicted Noise Class : ', y_pred)
+        # print('Predicted Noise Class : ', y_pred)
         y_pred_mean = np.mean(y_pred)
-        print('Predicted Noise Class MEAN : ', y_pred_mean)
+        # print('Predicted Noise Class MEAN : ', y_pred_mean)
 
         if y_pred_mean >= 0.5 :      # if detected, self.noise_detection changes to 1
-            print(' ! Leakage Detected ! ')
+            print(' Leakage Detected ! @', file_path)
             self.noise_detection = 1
         else :                       # if not, self.noise_detection remains 0
-            print('NO Leakage Detected')
+            print('NO Leakage Detected @', file_path)
             self.noise_detection = 0
         
         return self.noise_detection  # return self.noise_detection
