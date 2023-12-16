@@ -33,7 +33,7 @@ import sys
 import time
 
 import glob
-
+import os
 
 logging.basicConfig(level=logging.INFO)
 
@@ -56,8 +56,17 @@ class BatCam:
         # self.yolo_model = attempt_load('/home/smi/FennecBot/1106_2_best.pt') # Load the "custom" YOLOv5 model
         self.x1, self.y1, self.x2, self.y2 = 0, 0, 0, 0
         self.class_name : str= ""
-        self.yolo_model =  torch.hub.load('/home/smi/FennecBot/models', 'custom', source ='local', path='1106_2_best.pt',force_reload=True) ### The repo is stored locally
+        self.yolo_model =  torch.hub.load('/home/smi/FennecBot', 'custom', source ='local', path='1106_2_best.pt',force_reload=True) ### The repo is stored locally
         self.class_names = self.yolo_model.names ### class names in string
+
+        self.central_point = {
+            'Flange': [],
+            'Flush Ring': [],
+            'GasRegulator': [],
+            'Nuts': [],
+            'Piston Valve': [],
+            'Pressure Gage': []
+            }
 
         # self.BF_data = []
         # self.FullScan_arr = []
@@ -95,130 +104,81 @@ class BatCam:
         
         return self.code_info
 
-        
-    # def yolo_detection(self, webcam_frame):
-    #     # Record original frame size (before any resizing is done for model input)
-    #     original_frame_height, original_frame_width = webcam_frame.shape[:2]
+    # WORKING ON ........
 
-    #     # Resize frame to model input size (if necessary)
-    #     # Example: webcam_frame_resized = cv2.resize(webcam_frame, (640, 640))
-
-    #     # Convert the webcam frame from BGR to RGB and reshape for model input
-    #     img = cv2.cvtColor(webcam_frame, cv2.COLOR_BGR2RGB)
-    #     img_tensor = torch.from_numpy(img).float().permute(2, 0, 1).unsqueeze(0) / 255.0
-        
-    #     # Pass the frame through the YOLOv5 model   
-    #     results = self.yolo_model(img_tensor)
-    #     # Extract tensor from results tuple
-    #     detections = results[0]
-
-    #     # Assuming there's a confidence threshold you want to apply
-    #     conf_thresh = 0.80
-    #     # Use the confidence score to filter out weak detections
-    #     mask = detections[0, :, 4] > conf_thresh
-
-    #     # Extract the boxes, scores, and classes from the detections
-    #     boxes = detections[0, mask, :4].cpu().numpy()
-    #     scores = detections[0, mask, 4].cpu().numpy()
-    #     classes = detections[0, mask, 5].cpu().numpy().astype(np.int32)
-
-    #     # Load class names from data.yaml
-    #     with open('/home/smi/FennecBot/data.yaml', 'r') as yaml_file:
-    #         data = yaml.safe_load(yaml_file)
-    #         self.class_names = data['names']
-
-    #     # Draw the bounding boxes and labels on the frame
-    #     for box, score, class_idx in zip(boxes, scores, classes):
-    #         # Scale the bounding box coordinates back to the original frame's size
-    #         x1, y1, x2, y2 = box * [original_frame_width, original_frame_height, original_frame_width, original_frame_height]
-    #         x1, y1, x2, y2 = map(int, [x1, y1, x2, y2])
-
-    #         self.class_name = self.class_names[class_idx]
-    #         cv2.rectangle(webcam_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-    #         cv2.putText(webcam_frame, f"{self.class_name}: {score:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-            
-    #         # Print the coordinates of the detected object
-    #         print(f"{self.class_name} coordinates: ({x1}, {y1}), ({x2}, {y2})")
-
-    #     return self.x1, self.y1, self.x2, self.y2, self.class_name #change to self
-
-
-    # def multiple_yolo_detection(self, webcam_frame):
-    #     # Resize and convert the frame for model input
-    #     original_frame_height, original_frame_width = webcam_frame.shape[:2]
-    #     webcam_frame = cv2.resize(webcam_frame, (640, 640))
-    #     frame_rgb = cv2.cvtColor(webcam_frame, cv2.COLOR_BGR2RGB)
-
-    #     # Model inference
-    #     results = self.yolo_model([frame_rgb])
-    #     labels, coordinates = results.xyxyn[0][:, -1], results.xyxyn[0][:, :-1]
-
+    # def plot_boxes(self, results, frame):
     #     # Storing results
     #     self.yolo_list = []
-    #     for label, coord in zip(labels, coordinates):
-    #         if coord[4] >= 0.8:  # Confidence threshold
-    #             x1, y1, x2, y2 = coord[0:4] * [original_frame_width, original_frame_height, original_frame_width, original_frame_height]
-    #             x1, y1, x2, y2 = map(int, [x1, y1, x2, y2])
-    #             class_name = self.class_names[int(label)]
-    #             yolo_x = (x1 + x2) / 2
-    #             yolo_y = (y1 + y2) / 2
 
-    #             result = {
-    #                 "class_name": class_name,
-    #                 "score": coord[4],
-    #                 "x_coordinate": yolo_x,
-    #                 "y_coordinate": yolo_y
-    #             }
-    #             self.yolo_list.append(result)
+    #     labels, cord = results
+    #     n = len(labels)
+    #     x_shape, y_shape = frame.shape[1], frame.shape[0]
 
-    #             # Drawing bounding boxes (optional)
-    #             cv2.rectangle(webcam_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-    #             cv2.putText(webcam_frame, f"{class_name}: {coord[4]:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+    #     print(f"[INFO] Total {n} detections. . . ")
+    #     buffer = []
+    #     for i in range(n):
+    #         row = cord[i]
+    #         if row[4] >= 0.25:  # Confidence threshold
+    #             x1, y1, x2, y2 = int(row[0]*x_shape), int(row[1]*y_shape), int(row[2]*x_shape), int(row[3]*y_shape)
+    #             text_d = self.class_names[int(labels[i])]
 
-    #     print('YOLO LIST:', self.yolo_list)
-    #     return self.yolo_list
+    #             color = (0, 255, 0)  # Default color
+    #             if text_d == 'Flange':
+    #                 color = (0, 255, 0)
+    #             elif text_d == 'Flush Ring':
+    #                 color = (0, 0, 255)
+    #             elif text_d == 'GasRegulator':
+    #                 color = (0, 0, 255)
+    #             elif text_d == 'Nuts':
+    #                 color = (0, 255, 255)
+    #             elif text_d == 'Piston Valve':
+    #                 color = (255, 255, 0)
+    #             elif text_d == 'Pressure Gage':
+    #                 color = (255, 0, 255)
 
-    def detect_(self, frame):
-        frame = [frame]
+    #             # Draw rectangles and text
+    #             cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+    #             cv2.rectangle(frame, (x1, y1-20), (x2, y1), color, -1)
+    #             cv2.putText(frame, f"{text_d} {row[4]:.2f}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,255,255), 2)
+    #             x_mean = (x1+x2)/2
+    #             y_mean = (y1+y2)/2
+    #             buffer.append((x_mean, y_mean))
+    #             self.central_point[text_d].append(buffer)
 
-        results = self.yolo_model(frame)
-        labels, coordinates = results.xyxyn[0][:, -1], results.xyxyn[0][:, :-1]
-        return labels, coordinates
 
-    def plot_boxes(self, results, frame):
-        labels, cord = results
-        n = len(labels)
-        x_shape, y_shape = frame.shape[1], frame.shape[0]
+    #         labels, cord = results
+    #         n = len(labels)
+    #         x_shape, y_shape = frame.shape[1], frame.shape[0]
 
-        print(f"[INFO] Total {n} detections. . . ")
+    #         print(f"[INFO] Total {n} detections. . . ")
+    #         buffer = []
+    #         for i in range(n):
+    #             row = cord[i]
+    #             if row[4] >= 0.25:  # Confidence threshold
+    #                 x1, y1, x2, y2 = int(row[0]*x_shape), int(row[1]*y_shape), int(row[2]*x_shape), int(row[3]*y_shape)
+    #                 text_d = self.class_names[int(labels[i])]
+            
+    #                 x1, y1, x2, y2 = int(row[0]*x_shape), int(row[1]*y_shape), int(row[2]*x_shape), int(row[3]*y_shape)
+    #                 class_name = self.class_names[int(labels[i])]
+    #                 yolo_x = (x1 + x2) / 2
+    #                 yolo_y = (y1 + y2) / 2
 
-        for i in range(n):
-            row = cord[i]
-            if row[4] >= 0.25:  # Confidence threshold
-                x1, y1, x2, y2 = int(row[0]*x_shape), int(row[1]*y_shape), int(row[2]*x_shape), int(row[3]*y_shape)
-                text_d = self.class_names[int(labels[i])]
+    #                 result = {
+    #                     "class_name": class_name,
+    #                     "x_coordinate": yolo_x,
+    #                     "y_coordinate": yolo_y
+    #                 }
+    #                 self.yolo_list.append(result)
 
-                color = (0, 255, 0)  # Default color
-                if text_d == 'Flange':
-                    color = (0, 255, 0)
-                elif text_d == 'Flush Ring':
-                    color = (0, 0, 255)
-                elif text_d == 'GasRegulator':
-                    color = (0, 0, 255)
-                elif text_d == 'Nuts':
-                    color = (0, 255, 255)
-                elif text_d == 'Piston Valve':
-                    color = (255, 255, 0)
-                elif text_d == 'Pressure Gage':
-                    color = (255, 0, 255)
+    #                 # # Drawing bounding boxes (optional)
+    #                 # cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+    #                 # cv2.putText(frame, f"{class_name}: {coord[4]:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-                # Draw rectangles and text
-                cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-                cv2.rectangle(frame, (x1, y1-20), (x2, y1), color, -1)
-                cv2.putText(frame, f"{text_d} {row[4]:.2f}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,255,255), 2)
 
-        return frame
-   
+    #     return frame, self.central_point
+        
+
+
 
 
     def save_BF(self):
@@ -302,10 +262,8 @@ class BatCam:
 
                 # Extract features for each time step
                 stft_window = stft[:, time_start:time_end]
-
                 # Transpose the features to have time as the first axis
                 stft_window = np.transpose(stft_window)
-
                 # Append the features to the list
                 features.append(stft_window)
 
@@ -316,7 +274,8 @@ class BatCam:
         # Dynamically get the latest CSV file in the specified folder
         folder_path = '/home/smi/FennecBot/'
         # file_path = 'l_point_data.csv'
-        file_path = glob.glob(f'{folder_path}/*.csv')[-1]
+        file_path = glob.glob(f'{folder_path}/*.csv')
+        file_path = max(file_path, key= os.path.getmtime)
         print("✅ Loading Model..... Reading file", file_path)
         
         class_features = extract_features_v4(file_path, self.window_size, self.stride)
@@ -324,14 +283,14 @@ class BatCam:
         X_train = np.array(X_train)
         # print('Noise Input Data Shape : ',X_train.shape)
 
-        y_pred_prob = self.noise_model.predict(X_train)
-        y_pred = np.argmax(y_pred_prob, axis=1)
+        y_pred_prob = self.noise_model.predict(X_train) # Predict probabilities on test data
+        y_pred = np.argmax(y_pred_prob, axis=1) # Convert probabilities to class labels
         # print('Predicted Noise Class : ', y_pred)
         y_pred_mean = np.mean(y_pred)
         # print('Predicted Noise Class MEAN : ', y_pred_mean)
 
-        if y_pred_mean >= 0.5 :      # if detected, self.noise_detection changes to 1
-            print(' Leakage Detected ! @', file_path)
+        if y_pred_mean >= 0.3 :      # if detected, self.noise_detection changes to 1
+            print('⚠ Leakage Detected ! @', file_path, 'score :', y_pred_mean)
             self.noise_detection = 1
         else :                       # if not, self.noise_detection remains 0
             print('NO Leakage Detected @', file_path)
@@ -380,6 +339,7 @@ class BatCam:
 
                 if BF_toggle != 0:
                     self.BF_data = self.save_BF()
+                    self.leakage_detection()
                     BF_toggle = 0
                     break
 
@@ -400,6 +360,6 @@ if __name__ == "__main__":
     # Batcam.save_BF()  
     # Batcam.leakage_detection()
     try:
-        Batcam.rtsp_to_opencv(QR_toggle = 0, yolo_toggle = 1, BF_toggle=0)
+        Batcam.rtsp_to_opencv(QR_toggle = 0, yolo_toggle = 0, BF_toggle=1)
     except Exception as error:
         logging.error(error)
