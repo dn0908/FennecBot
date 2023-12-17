@@ -7,7 +7,6 @@ import pyzbar.pyzbar as pyzbar
 from tensorflow import keras
 import librosa
 
-
 import websocket
 import json
 import threading
@@ -25,8 +24,6 @@ import pickle
 import pandas as pd
 import csv
 import numpy as np
-
-
 import torch
 import yaml
 import sys
@@ -36,6 +33,7 @@ import glob
 import os
 
 logging.basicConfig(level=logging.INFO)
+
 
 class BatCam:
     def __init__(self):
@@ -69,10 +67,7 @@ class BatCam:
             }
 
         # self.BF_data = []
-        # self.FullScan_arr = []
         # self.frame = []
-        # self.on_message = []
-
 
         ##### NOISE DETECTION : DEEP LEARNING MODEL CONFIGURATIONS #####
         self.noise_model = keras.models.load_model('./models/model.h5')
@@ -86,11 +81,8 @@ class BatCam:
 
 
     def read_QRcodes(self, frame):
-        # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        # clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
-        # equalized = clahe.apply(gray)
-        # frame = cv2.resize(frame, (1600, 1200))
         codes = pyzbar.decode(frame)
+        
         for code in codes:
             x, y , w, h = code.rect
             self.qr_x = (2*x+w)/2
@@ -104,83 +96,61 @@ class BatCam:
         
         return self.code_info
 
-    # WORKING ON ........
+    def yolo_detect(self, frame):
+        frame = [frame]
+        results = self.yolo_model(frame)
+        labels, coordinates = results.xyxyn[0][:,-1], results.xyxyn[0][:,:-1]
+        return labels, coordinates
+    
+    def yolo_list(self, results, frame):
+        # Storing results
+        self.yolo_list = []
 
-    # def plot_boxes(self, results, frame):
-    #     # Storing results
-    #     self.yolo_list = []
+        labels, cord = results
+        n = len(labels)
+        x_shape, y_shape = frame.shape[1], frame.shape[0]
 
-    #     labels, cord = results
-    #     n = len(labels)
-    #     x_shape, y_shape = frame.shape[1], frame.shape[0]
+        print(f"[INFO] Total {n} detections. . . ")
 
-    #     print(f"[INFO] Total {n} detections. . . ")
-    #     buffer = []
-    #     for i in range(n):
-    #         row = cord[i]
-    #         if row[4] >= 0.25:  # Confidence threshold
-    #             x1, y1, x2, y2 = int(row[0]*x_shape), int(row[1]*y_shape), int(row[2]*x_shape), int(row[3]*y_shape)
-    #             text_d = self.class_names[int(labels[i])]
+        for i in range(n):
+            row = cord[i]
+            if row[4] >= 0.5:  # Confidence threshold
+                x1, y1, x2, y2 = int(row[0]*x_shape), int(row[1]*y_shape), int(row[2]*x_shape), int(row[3]*y_shape)
+                class_name = self.class_names[int(labels[i])]
 
-    #             color = (0, 255, 0)  # Default color
-    #             if text_d == 'Flange':
-    #                 color = (0, 255, 0)
-    #             elif text_d == 'Flush Ring':
-    #                 color = (0, 0, 255)
-    #             elif text_d == 'GasRegulator':
-    #                 color = (0, 0, 255)
-    #             elif text_d == 'Nuts':
-    #                 color = (0, 255, 255)
-    #             elif text_d == 'Piston Valve':
-    #                 color = (255, 255, 0)
-    #             elif text_d == 'Pressure Gage':
-    #                 color = (255, 0, 255)
+                yolo_x = (x1 + x2) / 2
+                yolo_y = (y1 + y2) / 2
+                
+                # For Bounding box visualization
+                if class_name == 'Flange':
+                    color = (255, 0, 0)
+                elif class_name == 'Flush Ring':
+                    color = (0, 255, 0)
+                elif class_name == 'GasRegulator':
+                    color = (0, 0, 255)
+                elif class_name == 'Nuts':
+                    color = (0, 255, 255)
+                elif class_name == 'Piston Valve':
+                    color = (255, 255, 0)
+                elif class_name == 'Pressure Gage':
+                    color = (255, 0, 255)
+                # Draw rectangles and text
+                cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+                cv2.rectangle(frame, (x1, y1-20), (x2, y1), color, -1)
+                cv2.putText(frame, f"{text_d} {row[4]:.2f}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,255,255), 2)
 
-    #             # Draw rectangles and text
-    #             cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-    #             cv2.rectangle(frame, (x1, y1-20), (x2, y1), color, -1)
-    #             cv2.putText(frame, f"{text_d} {row[4]:.2f}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,255,255), 2)
-    #             x_mean = (x1+x2)/2
-    #             y_mean = (y1+y2)/2
-    #             buffer.append((x_mean, y_mean))
-    #             self.central_point[text_d].append(buffer)
-
-
-    #         labels, cord = results
-    #         n = len(labels)
-    #         x_shape, y_shape = frame.shape[1], frame.shape[0]
-
-    #         print(f"[INFO] Total {n} detections. . . ")
-    #         buffer = []
-    #         for i in range(n):
-    #             row = cord[i]
-    #             if row[4] >= 0.25:  # Confidence threshold
-    #                 x1, y1, x2, y2 = int(row[0]*x_shape), int(row[1]*y_shape), int(row[2]*x_shape), int(row[3]*y_shape)
-    #                 text_d = self.class_names[int(labels[i])]
-            
-    #                 x1, y1, x2, y2 = int(row[0]*x_shape), int(row[1]*y_shape), int(row[2]*x_shape), int(row[3]*y_shape)
-    #                 class_name = self.class_names[int(labels[i])]
-    #                 yolo_x = (x1 + x2) / 2
-    #                 yolo_y = (y1 + y2) / 2
-
-    #                 result = {
-    #                     "class_name": class_name,
-    #                     "x_coordinate": yolo_x,
-    #                     "y_coordinate": yolo_y
-    #                 }
-    #                 self.yolo_list.append(result)
-
-    #                 # # Drawing bounding boxes (optional)
-    #                 # cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-    #                 # cv2.putText(frame, f"{class_name}: {coord[4]:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                result = {
+                    "class_name": class_name,
+                    "x_coordinate": yolo_x,
+                    "y_coordinate": yolo_y
+                }
+                self.yolo_list.append(result)
 
 
-    #     return frame, self.central_point
-        
+        return frame, self.yolo_list
 
 
-
-
+    # Save Listening Point Data for 32 counts to CSV file
     def save_BF(self):
         USER = "user"
         PASSWORD = "user"
@@ -206,7 +176,7 @@ class BatCam:
         print("WebSocket Closed, Count Num to zero...")
 
 
-    # return ws
+    # Change Listening Point by Index
     def change_LPoint(self, new_index):
         USER = "admin"
         PASSWORD = "admin"
@@ -238,6 +208,8 @@ class BatCam:
         except Exception as ex:
             print(ex)
 
+
+    # Leakage Detection (Deep Learning Model, Predict)
     def leakage_detection(self):
         def extract_features_v4(file_path, window_size, stride):
             data = pd.read_csv(file_path)
@@ -246,9 +218,7 @@ class BatCam:
             # Perform STFT on the entire audio
             stft = librosa.stft(audio, n_fft=2048, hop_length=512)
             print("stft size: ", stft.shape)
-
-            # Calculate the number of time steps
-            num_time_steps = stft.shape[1]
+            num_time_steps = stft.shape[1] # Calculate the number of time steps
 
             features = []
             for i in range(0, num_time_steps, stride):
@@ -260,34 +230,25 @@ class BatCam:
                 if time_end > num_time_steps:
                     break
 
-                # Extract features for each time step
-                stft_window = stft[:, time_start:time_end]
-                # Transpose the features to have time as the first axis
-                stft_window = np.transpose(stft_window)
-                # Append the features to the list
-                features.append(stft_window)
+                stft_window = stft[:, time_start:time_end] # Extract features for each time step
+                stft_window = np.transpose(stft_window) # Transpose the features to have time as the first axis
+                features.append(stft_window) # Append the features to the list
 
             return features
 
         X_train = []
-
-        # Dynamically get the latest CSV file in the specified folder
         folder_path = '/home/smi/FennecBot/'
-        # file_path = 'l_point_data.csv'
         file_path = glob.glob(f'{folder_path}/*.csv')
-        file_path = max(file_path, key= os.path.getmtime)
+        file_path = max(file_path, key= os.path.getmtime) # get the latest csv file
         print("✅ Loading Model..... Reading file", file_path)
         
         class_features = extract_features_v4(file_path, self.window_size, self.stride)
         X_train.extend(class_features)
         X_train = np.array(X_train)
-        # print('Noise Input Data Shape : ',X_train.shape)
 
         y_pred_prob = self.noise_model.predict(X_train) # Predict probabilities on test data
         y_pred = np.argmax(y_pred_prob, axis=1) # Convert probabilities to class labels
-        # print('Predicted Noise Class : ', y_pred)
         y_pred_mean = np.mean(y_pred)
-        # print('Predicted Noise Class MEAN : ', y_pred_mean)
 
         if y_pred_mean >= 0.3 :      # if detected, self.noise_detection changes to 1
             print('⚠ Leakage Detected ! @', file_path, 'score :', y_pred_mean)
@@ -296,7 +257,7 @@ class BatCam:
             print('NO Leakage Detected @', file_path)
             self.noise_detection = 0
         
-        return self.noise_detection  # return self.noise_detection
+        return self.noise_detection
 
 
     def rtsp_to_opencv(self, QR_toggle = 0, yolo_toggle = 0, BF_toggle = 0):
@@ -329,11 +290,8 @@ class BatCam:
 
                 if yolo_toggle != 0:
                     frame = cv2.resize(frame, (640, 480))
-                    # self.x1, self.y1, self.x2, self.y2, self.class_name = self.yolo_detection(frame)
-                    # frame = self.yolo_detection(frame)
-                    # self.yolo_list = self.multiple_yolo_detection(frame)
-                    results = self.detect_(frame)
-                    frame = self.plot_boxes(results, frame)
+                    yolo_results = self.yolo_detect(frame)
+                    frame, yolo_list = self.yolo_list(yolo_results, frame)
 
                     # break
 
@@ -360,6 +318,6 @@ if __name__ == "__main__":
     # Batcam.save_BF()  
     # Batcam.leakage_detection()
     try:
-        Batcam.rtsp_to_opencv(QR_toggle = 0, yolo_toggle = 0, BF_toggle=1)
+        Batcam.rtsp_to_opencv(QR_toggle = 0, yolo_toggle = 0, BF_toggle=0)
     except Exception as error:
         logging.error(error)

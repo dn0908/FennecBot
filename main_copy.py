@@ -32,9 +32,6 @@ class MainController:
             hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
             mask = cv2.inRange(hsv, self.Realsense.lower_hsv, self.Realsense.upper_hsv) 
             contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-            
-            # self.flag = self.Realsense.detect_ARmarker(frame) # Detect AR marker
             
             # QRinfo = self.Realsense.read_QRcodes(frame) # Detect and Read QR code
 
@@ -45,8 +42,6 @@ class MainController:
             # self.Pantilt.Move2Target(frame) # Move PanTilt
         
             self.Batcam.rtsp_to_opencv(yolo_toggle=1, BF_toggle=0, QR_toggle=1)
-
-
 
             # print("lin, Ang velocity: ", linear_velocity, " ", angular_velocity)
             # print("flag: ", self.flag, "QRinfo: ", QRinfo, "lin, Ang velocity: ", linear_velocity, " ", angular_velocity)
@@ -161,7 +156,7 @@ class MainController:
                     self.Batcam.rtsp_to_opencv(yolo_toggle=1)
 
                     results_length = len(self.Batcam.yolo_list)
-                    print(f"yolo box number: {results_length}")
+                    print(f"[YOLOv5] 🚀 Total {results_length} boxes detected ...")
 
                     prev_x, prev_y = None, None  # for prev coord saving
 
@@ -196,7 +191,7 @@ class MainController:
                         
                         prev_x = x_coordinate
                         prev_y = y_coordinate
-                    #change line
+                    
                     Task = 0
                     self.task = 'D'
                     break
@@ -230,15 +225,9 @@ class MainController:
                     
                     os.chdir('/home/smi/FennecBot') # get out from data folder
                     ############################################
-                    Task = 2
-                    
-                elif Task == 2: # Collect BF data
-                    # for target in self.Batcam.FullScan_arr:
-                    #     # self.Pantilt.MotorController(pan_angle=target[0], tilt_angle=target[1])
-                    #     self.Batcam.rtsp_to_opencv(BF_toggle=1)
-
                     Task = 0
                     self.task = 'E'
+
                     
             if self.task == 'E':
                 if Task == 0:
@@ -250,9 +239,6 @@ class MainController:
                         # self.Pantilt.MotorController(pan_angle= 0, tilt_angle= 0)
                         Task = 1
                 elif Task == 1:
-                    
-
-
                     pass
 
 
