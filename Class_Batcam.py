@@ -36,11 +36,9 @@ logging.basicConfig(level=logging.INFO)
 
 class BatCam:
     def __init__(self):
-        # BATCAM RTSP_URL = "rtsp://<username>:<password>@<ip>:8544/raw
+        ##### BATCAM RTSP_URL = "rtsp://<username>:<password>@<ip>:8544/raw
         self.BATCAM_IP = '192.168.2.2'
         self.RTSP_URL = "rtsp:/192.168.2.2:8554/raw"
-        # self.center_x = 800
-        # self.center_y = 600 # Batcam center pixels
 
         ##### QR DETECTION : CODE INFO CONFIGURATION #####
         self.qr_x = 0 # QR position data
@@ -48,27 +46,9 @@ class BatCam:
         self.code_info : str= "" # QR code info
 
         ##### OBJECT DETECTION : CUSTOM YOLOv5 MODEL CONFIGURATION #####
-        #sys.path.insert(0, "/home/smi/FennecBot/fennecbot_v05_yolov5_proto_yonsei/yolov5")
-        # from yolov5.models.experimental import attempt_load # Now import attempt_load
-        # self.yolo_model = attempt_load('/home/smi/FennecBot/1106_2_best.pt') # Load the "custom" YOLOv5 model
-        # self.x1, self.y1, self.x2, self.y2 = 0, 0, 0, 0
-        # self.class_name : str= ""
         self.yolo_model =  torch.hub.load('/home/smi/FennecBot', 'custom', source ='local', path='1106_2_best.pt',force_reload=True) ### The repo is stored locally
         self.classes = self.yolo_model.names ### class names in string
-
-        self.central_point = {
-            'Flange': [],
-            'Flush Ring': [],
-            'GasRegulator': [],
-            'Nuts': [],
-            'Piston Valve': [],
-            'Pressure Gage': []
-            }
-
         self.lpt_idx = 0
-        
-        # self.BF_data = []
-        # self.frame = []
 
         ##### NOISE DETECTION : DEEP LEARNING MODEL CONFIGURATIONS #####
         self.noise_model = keras.models.load_model('./models/model.h5')
@@ -79,7 +59,7 @@ class BatCam:
         self.stride_sec = self.window_size_sec/2.0  # Stride length in seconds
         self.stride = int(self.stride_sec / (512 / self.sr))
         self.noise_detection = 0
-
+        self.predicted_prob = 0
 
     def read_QRcodes(self, frame):
         codes = pyzbar.decode(frame)
@@ -165,7 +145,6 @@ class BatCam:
                 #     cv2.rectangle(frame, (x1, y1), (x2, y2),color, 2)
                 #     cv2.rectangle(frame, (x1, y1-20), (x2, y1), color, -1)
                 #     cv2.putText(frame, class_name + f" {round(float(row[4]),2)}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7,(255,255,255), 2)
-               
 
                 result = {
                     "class_name": class_name,
@@ -221,7 +200,6 @@ class BatCam:
         l_point_index : 40x30 L point map coordinate (0 to 1199)
 
         """
-
         # Mapping frame to L point map
         Lmap_x = int((x_cent + 1) / 16)   # 1 to 40
         Lmap_y = int((y_cent + 1) / 16)      # 1 to 30
@@ -237,6 +215,23 @@ class BatCam:
             self.lpt_indx = (int(Lmap_y-1)*40) + int(Lmap_x-1)
 
         return self.lpt_indx
+    
+    def calc_l_map(self, lpoint_index):
+        """
+        Change L point index to 40x30 L point map x,y coordinates
+
+        Args:
+        lpoint_index : L point index (0 to 1199)
+
+        Returns:
+        lmap_x : 40x30 L point map X coordinate (0 to 40)
+        lmap_y : 40x30 L point map Y coordinate (0 to 40)
+
+        """
+        lmap_y = int((lpoint_index/40)+1)
+        lmap_x = lpoint_index - int(lmap_y*40)
+
+        return lmap_x, lmap_y
 
 
     # Change Listening Point by Index
@@ -316,6 +311,13 @@ class BatCam:
         y_pred_mean = np.mean(y_pred)
         # print("y_pred_mean : ", y_pred_mean)
 
+        if y_pred_mean == 0:
+            self.predicted_prob = np.mean(y_pred_prob[:, 0])
+        elif y_pred_mean == 1:
+            self.predicted_prob = np.mean(y_pred_prob[:, 1])
+        elif y_pred_mean == 2:
+            self.predicted_prob = np.mean(y_pred_prob[:, 2])
+
         if y_pred_mean >= 0.3 :      # if detected, self.noise_detection changes to 1
             print('⚠ Leakage Detected ! @', file_path, 'score :', y_pred_mean)
             self.noise_detection = 1
@@ -323,7 +325,7 @@ class BatCam:
             print('NO Leakage Detected @', file_path)
             self.noise_detection = 0
         
-        return self.noise_detection
+        return self.noise_detection, self.predicted_prob
 
 
     def rtsp_to_opencv(self, QR_toggle = 0, yolo_toggle = 0, BF_toggle = 0):

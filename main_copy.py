@@ -24,6 +24,8 @@ class MainController:
         self.Pantilt = PanTilt()
         self.Batcam = BatCam()
 
+        self.full_scan_data = []
+
     def main_action(self):
         while True:
             frames = self.Realsense.pipeline.wait_for_frames() 
@@ -207,9 +209,12 @@ class MainController:
                         Task = 1
                         
                 elif Task == 1: # Change L point & save csv all & predict each
+                    
+                    os.chdir('/home/smi/FennecBotData')
 
                     ##### FOR LPOINT CHANGING & FULL SCAN #####
-                    data_folder = "Fullscan_" + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                    date_time_now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                    data_folder = "Fullscan_" + date_time_now
                     os.makedirs(data_folder, exist_ok=True)
                     os.chdir(data_folder) # move into data folder
                     
@@ -219,13 +224,66 @@ class MainController:
                         self.Batcam.change_LPoint(point)
                         
                         time.sleep(5)  # Adjust the delay as needed
-                        
+
                         self.Batcam.rtsp_to_opencv(BF_toggle=1)
+                        
+                        lpoint_idx = point
+                        Lmap_x, Lmap_y = self.Batcam.calc_l_map(lpoint_idx)
+                        predicted_probability = self.Batcam.predicted_prob
+                        l_point_prob = {
+                            "Lmap_x": Lmap_x,
+                            "Lmap_y": Lmap_y,
+                            "probability": predicted_probability
+                        }
+                        self.full_scan_data.append(l_point_prob)
                     
-                    os.chdir('/home/smi/FennecBot') # get out from data folder
+                    os.chdir('/home/smi/FennecBotData') # get out from data folder
+
+                    fullscan_filename = data_folder + ".json" # dump as json file
+                    with open(fullscan_filename, "w") as f:
+                        json.dump(self.full_scan_data, f, indent=2)
+
+                    os.chdir('/home/smi/FennecBot')
                     ############################################
-                    Task = 0
-                    self.task = 'E'
+                    Task = 2
+                    
+                elif Task == 2: # plot fullscan overlay map
+
+                    # read json
+                    folder_path = '/home/smi/FennecBotData/'
+                    file_path = glob.glob(f'{folder_path}/*.json')
+                    file_path = max(file_path, key= os.path.getmtime) # get the latest json file
+                    print("✅ Loading Data..... Reading file", file_path)
+                    with open(file_path, "r") as f:
+                        data = json.load(f)
+
+                    # convert data to numpy
+                    x = np.array([d["Lmap_x"] for d in data])
+                    y = np.array([d["Lmap_y"] for d in data])
+                    p = np.array([d["probability"] for d in data])
+
+                    # convert x, y coord to 40x30 pixel img
+                    img = np.full((30, 40), 0)
+                    for i, j in zip(x, y):
+                        img[j-1, i-1] = p[i-1]
+
+                    # if no data -> interpolate
+                    for i in range(30):
+                        for j in range(40):
+                            if i == 0 or j == 0 or i == 29 or j == 39:
+                                continue
+                            else:
+                                # interpolate
+                                img[i, j] = (img[i-1, j] + img[i+1, j] + img[i, j-1] + img[i, j+1]) / 4
+
+                    img = int(img*255) # convert to pixel val
+
+                    img_file = file_path - ".json"
+                    img_file = img_file + ".png"
+                    # imshow img
+                    cv2.imshow("Full scan data", img)
+                    cv2.imwrite(img_file, img)
+                    cv2.waitkey(0)
 
                     
             if self.task == 'E':
