@@ -216,7 +216,7 @@ class BatCam:
 
         return self.lpt_indx
     
-    def calc_l_map(self, lpoint_index):
+    def calc_l_map(self, lpt):
         """
         Change L point index to 40x30 L point map x,y coordinates
 
@@ -228,8 +228,13 @@ class BatCam:
         lmap_y : 40x30 L point map Y coordinate (0 to 40)
 
         """
-        lmap_y = int((lpoint_index/40)+1)
-        lmap_x = lpoint_index - int(lmap_y*40)
+        if lpt < 30:
+            lmap_y = 1
+            lmap_x = lpt
+
+        elif lpt >= 30 :
+            lmap_x = lpt - (40*int(lpt/40))
+            lmap_y = int(lpt/40) + 1
 
         return lmap_x, lmap_y
 
@@ -312,11 +317,11 @@ class BatCam:
         # print("y_pred_mean : ", y_pred_mean)
 
         if y_pred_mean == 0:
-            self.predicted_prob = np.mean(y_pred_prob[:, 0])
+            self.predicted_prob = float(np.mean(y_pred_prob[:, 0]))
         elif y_pred_mean == 1:
-            self.predicted_prob = np.mean(y_pred_prob[:, 1])
+            self.predicted_prob = float(np.mean(y_pred_prob[:, 1]))
         elif y_pred_mean == 2:
-            self.predicted_prob = np.mean(y_pred_prob[:, 2])
+            self.predicted_prob = float(np.mean(y_pred_prob[:, 2]))
 
         if y_pred_mean >= 0.3 :      # if detected, self.noise_detection changes to 1
             print('⚠ Leakage Detected ! @', file_path, 'score :', y_pred_mean)
@@ -379,7 +384,7 @@ class BatCam:
 
 if __name__ == "__main__":
     Batcam = BatCam()
-    
+
     try:
         Batcam.rtsp_to_opencv(QR_toggle = 0, yolo_toggle = 0, BF_toggle=1)
     except Exception as error:

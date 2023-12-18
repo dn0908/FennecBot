@@ -219,7 +219,7 @@ class MainController:
                     os.chdir(data_folder) # move into data folder
                     
                     # for point in range(1199): # for fullscan
-                    for point in range(0, 1200, 10): # for scan by index step 10
+                    for point in range(0, 1200, 200): # for scan by index step 10
                         print(f"Changing Listening Point to {point}")
                         self.Batcam.change_LPoint(point)
                         
@@ -227,8 +227,8 @@ class MainController:
 
                         self.Batcam.rtsp_to_opencv(BF_toggle=1)
                         
-                        lpoint_idx = point
-                        Lmap_x, Lmap_y = self.Batcam.calc_l_map(lpoint_idx)
+                        lpt = point
+                        Lmap_x, Lmap_y = self.Batcam.calc_l_map(lpt)
                         predicted_probability = self.Batcam.predicted_prob
                         l_point_prob = {
                             "Lmap_x": Lmap_x,
@@ -282,8 +282,10 @@ class MainController:
                     img_file = img_file + ".png"
                     # imshow img
                     cv2.imshow("Full scan data", img)
+                    os.chdir('/home/smi/FennecBotData')
                     cv2.imwrite(img_file, img)
                     cv2.waitkey(0)
+                    os.chdir('/home/smi/FennecBot')
 
                     
             if self.task == 'E':
