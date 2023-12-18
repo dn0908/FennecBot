@@ -13,13 +13,12 @@ from Class_PanTilt import *
 from Class_Batcam import *
 import datetime
 import os
-from imports import *
+
 
 
 class MainController:
     def __init__(self):
-
-        self.task = 'C' # init task set to 'A'
+        self.task = 'D' # init task set to 'A'
         self.Scoutmini = ScoutMini()
         self.Realsense = RealSense()
         self.Pantilt = PanTilt()
@@ -68,7 +67,7 @@ class MainController:
         |      E     |       o        |   o  |     o    |  o   |   o    |    o     |   o  | Full
         
         '''
-        Task = 0
+        Task = 1
         
         while True:
             frames = self.Realsense.pipeline.wait_for_frames() 
@@ -171,8 +170,8 @@ class MainController:
                             # target_pos = [x_coordinate, y_coordinate]
                             print(f"detected ID {idx + 1}: Class {class_name},X: {x_coordinate}, Y: {y_coordinate}")
 
-                            l_point_index = calc_l_point(yolo_x, yolo_y)
-                            self.Batcam.change_LPoint(l_point_index)
+                            indx = self.Batcam.calc_l_point(yolo_x, yolo_y)
+                            self.Batcam.change_LPoint(indx)
 
                             self.Batcam.rtsp_to_opencv(BF_toggle=1) # save BF
 
@@ -184,8 +183,8 @@ class MainController:
                             # target_pos = [yolo_x, yolo_y]
                             print(f"detected ID {idx + 1}: Class {class_name},X: {x_coordinate}, Y: {y_coordinate}")
 
-                            l_point_index = calc_l_point(yolo_x, yolo_y)
-                            self.Batcam.change_LPoint(l_point_index)
+                            indx = self.Batcam.calc_l_point(yolo_x, yolo_y)
+                            self.Batcam.change_LPoint(indx)
 
                             self.Batcam.rtsp_to_opencv(BF_toggle=1) # save BF
                         

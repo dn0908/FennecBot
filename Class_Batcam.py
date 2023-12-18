@@ -34,11 +34,10 @@ import os
 
 logging.basicConfig(level=logging.INFO)
 
-
 class BatCam:
     def __init__(self):
         # BATCAM RTSP_URL = "rtsp://<username>:<password>@<ip>:8544/raw
-        BATCAM_IP = '192.168.2.2'
+        self.BATCAM_IP = '192.168.2.2'
         self.RTSP_URL = "rtsp:/192.168.2.2:8554/raw"
         # self.center_x = 800
         # self.center_y = 600 # Batcam center pixels
@@ -52,10 +51,10 @@ class BatCam:
         #sys.path.insert(0, "/home/smi/FennecBot/fennecbot_v05_yolov5_proto_yonsei/yolov5")
         # from yolov5.models.experimental import attempt_load # Now import attempt_load
         # self.yolo_model = attempt_load('/home/smi/FennecBot/1106_2_best.pt') # Load the "custom" YOLOv5 model
-        self.x1, self.y1, self.x2, self.y2 = 0, 0, 0, 0
-        self.class_name : str= ""
+        # self.x1, self.y1, self.x2, self.y2 = 0, 0, 0, 0
+        # self.class_name : str= ""
         self.yolo_model =  torch.hub.load('/home/smi/FennecBot', 'custom', source ='local', path='1106_2_best.pt',force_reload=True) ### The repo is stored locally
-        self.class_names = self.yolo_model.names ### class names in string
+        self.classes = self.yolo_model.names ### class names in string
 
         self.central_point = {
             'Flange': [],
@@ -66,6 +65,8 @@ class BatCam:
             'Pressure Gage': []
             }
 
+        self.lpt_idx = 0
+        
         # self.BF_data = []
         # self.frame = []
 
@@ -96,14 +97,18 @@ class BatCam:
         
         return self.code_info
 
+
+    # Yolo Detection. Detect multiple bboxes in frame, return self.yolo_list
     def yolo_detect(self, frame):
+        frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
         frame = [frame]
         results = self.yolo_model(frame)
         labels, coordinates = results.xyxyn[0][:,-1], results.xyxyn[0][:,:-1]
         return labels, coordinates
     
-    def yolo_list(self, results, frame):
+    def yolo_plot(self, results, frame):
         # Storing results
+        frame = cv2.cvtColor(frame,cv2.COLOR_RGB2BGR)
         self.yolo_list = []
 
         labels, cord = results
@@ -112,32 +117,55 @@ class BatCam:
 
         print(f"[INFO] Total {n} detections. . . ")
 
+
         for i in range(n):
             row = cord[i]
-            if row[4] >= 0.5:  # Confidence threshold
+            if row[4] >= 0.3:  # Confidence threshold
                 x1, y1, x2, y2 = int(row[0]*x_shape), int(row[1]*y_shape), int(row[2]*x_shape), int(row[3]*y_shape)
-                class_name = self.class_names[int(labels[i])]
+                class_name = self.classes[int(labels[i])]
 
                 yolo_x = (x1 + x2) / 2
                 yolo_y = (y1 + y2) / 2
                 
-                # For Bounding box visualization
-                if class_name == 'Flange':
-                    color = (255, 0, 0)
-                elif class_name == 'Flush Ring':
-                    color = (0, 255, 0)
-                elif class_name == 'GasRegulator':
-                    color = (0, 0, 255)
-                elif class_name == 'Nuts':
-                    color = (0, 255, 255)
-                elif class_name == 'Piston Valve':
-                    color = (255, 255, 0)
-                elif class_name == 'Pressure Gage':
-                    color = (255, 0, 255)
-                # Draw rectangles and text
-                cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-                cv2.rectangle(frame, (x1, y1-20), (x2, y1), color, -1)
-                cv2.putText(frame, f"{text_d} {row[4]:.2f}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,255,255), 2)
+                # # For Bounding box visualization
+                # # Un Comment for visualization
+                # if class_name == 'Flange':
+                #     color = (255, 0, 0)
+                #     # Draw rectangles and text
+                #     cv2.rectangle(frame, (x1, y1), (x2, y2),color, 2)
+                #     cv2.rectangle(frame, (x1, y1-20), (x2, y1), color, -1)
+                #     cv2.putText(frame, class_name + f" {round(float(row[4]),2)}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7,(255,255,255), 2)
+                # elif class_name == 'Flush Ring':
+                #     color = (0, 255, 0)
+                #     # Draw rectangles and text
+                #     cv2.rectangle(frame, (x1, y1), (x2, y2),color, 2)
+                #     cv2.rectangle(frame, (x1, y1-20), (x2, y1), color, -1)
+                #     cv2.putText(frame, class_name + f" {round(float(row[4]),2)}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7,(255,255,255), 2)
+                # elif class_name == 'GasRegulator':
+                #     color = (0, 0, 255)
+                #     # Draw rectangles and text
+                #     cv2.rectangle(frame, (x1, y1), (x2, y2),color, 2)
+                #     cv2.rectangle(frame, (x1, y1-20), (x2, y1), color, -1)
+                #     cv2.putText(frame, class_name + f" {round(float(row[4]),2)}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7,(255,255,255), 2)
+                # elif class_name == 'Nuts':
+                #     color = (0, 255, 255)
+                #     # Draw rectangles and text
+                #     cv2.rectangle(frame, (x1, y1), (x2, y2),color, 2)
+                #     cv2.rectangle(frame, (x1, y1-20), (x2, y1), color, -1)
+                #     cv2.putText(frame, class_name + f" {round(float(row[4]),2)}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7,(255,255,255), 2)
+                # elif class_name == 'Piston Valve':
+                #     color = (255, 255, 0)
+                #     # Draw rectangles and text
+                #     cv2.rectangle(frame, (x1, y1), (x2, y2),color, 2)
+                #     cv2.rectangle(frame, (x1, y1-20), (x2, y1), color, -1)
+                #     cv2.putText(frame, class_name + f" {round(float(row[4]),2)}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7,(255,255,255), 2)
+                # elif class_name == 'Pressure Gage':
+                #     color = (255, 0, 255)
+                #     # Draw rectangles and text
+                #     cv2.rectangle(frame, (x1, y1), (x2, y2),color, 2)
+                #     cv2.rectangle(frame, (x1, y1-20), (x2, y1), color, -1)
+                #     cv2.putText(frame, class_name + f" {round(float(row[4]),2)}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7,(255,255,255), 2)
+               
 
                 result = {
                     "class_name": class_name,
@@ -146,7 +174,7 @@ class BatCam:
                 }
                 self.yolo_list.append(result)
 
-
+        self.yolo_list = sorted(self.yolo_list, key=lambda item: (item["x_coordinate"], item["y_coordinate"])) # sort yolo list before return
         return frame, self.yolo_list
 
 
@@ -160,7 +188,7 @@ class BatCam:
         trigger_id = None
         count_num = 0
         data_list = []
-        print(count_num)    
+        print(count_num)
 
         ws = websocket.WebSocketApp(f"ws://{BATCAM_IP}/ws",
                                     on_open=on_open,
@@ -171,9 +199,44 @@ class BatCam:
                                     header={"Authorization": f"Basic %s" % base64EncodedAuth}
                                 )
         Thread(target=ws.run_forever).start()
-        time.sleep(1.5)
+
+        # originally 1.5 sec for 32 counts.
+        # BUT occasionally error due to BATCAM. so .4 sec for buffer.
+        # Reduce buffer if more than one csv saved
+        time.sleep(1.9)
+        count_num = 0
         ws.close()
         print("WebSocket Closed, Count Num to zero...")
+
+
+    def calc_l_point(self, x_cent, y_cent):
+        """
+        Change 640 x 480 frame coordinate to 40x30 L point map coordinate
+
+        Args:
+        x_center: frame point x coordinate (0 to 639)
+        y_center: frame point y coordinate (0 to 479)
+
+        Returns:
+        l_point_index : 40x30 L point map coordinate (0 to 1199)
+
+        """
+
+        # Mapping frame to L point map
+        Lmap_x = int((x_cent + 1) / 16)   # 1 to 40
+        Lmap_y = int((y_cent + 1) / 16)      # 1 to 30
+        # print('Lmap X', Lmap_x, 'Lmap Y', Lmap_y)
+
+        # Mapping L point map to L point index
+        if Lmap_y == 0:
+            if Lmap_x == 0:
+                self.lpt_indx = Lmap_x
+            else:
+                self.lpt_indx = abs(Lmap_x - 1)
+        elif Lmap_y > 0 :
+            self.lpt_indx = (int(Lmap_y-1)*40) + int(Lmap_x-1)
+
+        return self.lpt_indx
 
 
     # Change Listening Point by Index
@@ -247,8 +310,11 @@ class BatCam:
         X_train = np.array(X_train)
 
         y_pred_prob = self.noise_model.predict(X_train) # Predict probabilities on test data
+        # print('y_pred_prob : ', y_pred_prob)
         y_pred = np.argmax(y_pred_prob, axis=1) # Convert probabilities to class labels
+        # print("y_pred :",y_pred)
         y_pred_mean = np.mean(y_pred)
+        # print("y_pred_mean : ", y_pred_mean)
 
         if y_pred_mean >= 0.3 :      # if detected, self.noise_detection changes to 1
             print('⚠ Leakage Detected ! @', file_path, 'score :', y_pred_mean)
@@ -270,7 +336,6 @@ class BatCam:
         while True:
             ret, frame = cap.read()
             frame = cv2.resize(frame, (640, 480)) #resize cap for model input
-            
 
             if not ret:
                 print("Failed to grab frame.")
@@ -281,7 +346,6 @@ class BatCam:
                 self.frame = frame #?
                 
                 if QR_toggle != 0:
-                    frame = cv2.resize(frame, (640, 480))
                     prev_code_info = self.code_info
                     self.code_info = self.read_QRcodes(frame)
                     if self.code_info != prev_code_info:
@@ -289,11 +353,9 @@ class BatCam:
                         break
 
                 if yolo_toggle != 0:
-                    frame = cv2.resize(frame, (640, 480))
                     yolo_results = self.yolo_detect(frame)
-                    frame, yolo_list = self.yolo_list(yolo_results, frame)
-
-                    # break
+                    frame, yolo_list_ = self.yolo_plot(yolo_results, frame)
+                    break
 
                 if BF_toggle != 0:
                     self.BF_data = self.save_BF()
@@ -315,9 +377,8 @@ class BatCam:
 
 if __name__ == "__main__":
     Batcam = BatCam()
-    # Batcam.save_BF()  
-    # Batcam.leakage_detection()
+    
     try:
-        Batcam.rtsp_to_opencv(QR_toggle = 0, yolo_toggle = 0, BF_toggle=0)
+        Batcam.rtsp_to_opencv(QR_toggle = 0, yolo_toggle = 0, BF_toggle=1)
     except Exception as error:
         logging.error(error)

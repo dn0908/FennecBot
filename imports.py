@@ -1,33 +1,3 @@
-def calc_l_point(x_center, y_center):
-    """
-    Change 640 x 480 frame coordinate to 40x30 L point map coordinate
-
-    Args:
-    x_center: frame point x coordinate (0 to 639)
-    y_center: frame point y coordinate (0 to 479)
-
-    Returns:
-    l_point_index : 40x30 L point map coordinate (0 to 1199)
-
-    """
-
-    # Mapping frame to L point map
-    Lmap_x = int((x_center + 1) / 16)   # 1 to 40
-    Lmap_y = int((y_center + 1) / 16)      # 1 to 30
-    # print('Lmap X', Lmap_x, 'Lmap Y', Lmap_y)
-
-    # Mapping L point map to L point index
-    if Lmap_y == 0:
-        if Lmap_x == 0:
-            l_point_index = Lmap_x
-        else:
-            l_point_index = abs(Lmap_x - 1)
-    elif Lmap_y > 0 :
-        l_point_index = (int(Lmap_y-1)*40) + int(Lmap_x-1)
-
-    return l_point_index
-
-
 # if __name__ == "__main__":
 #     x_center = 319
 #     y_center = 239

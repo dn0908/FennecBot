@@ -17,10 +17,9 @@ BATCAM_IP = "192.168.2.2"
 credential = f"{USER}:{PASSWORD}"
 base64EncodedAuth = base64.b64encode(credential.encode()).decode()
 
-trigger_id = None
 count_num = 0
+trigger_id = None
 save_num = 0
-
 data_list = []
 
 
@@ -32,9 +31,9 @@ def save_csv(timestamp, audio_data):
     df.to_csv(filename, index = False)
 
 def on_message(_, message):
-    global trigger_id
+    # global trigger_id
     global count_num
-    global save_num
+    # global save_num
     
     data_= json.loads(message)
     timestamp = data_["timestamp"]
@@ -94,6 +93,24 @@ if __name__ == "__main__":
                                 header={"Authorization": f"Basic %s" % base64EncodedAuth}
                             )
     Thread(target=ws.run_forever).start()
-    time.sleep(1.5)
+    time.sleep(2)
+    count_num = 0
+    ws.close()
+    print("WebSocket Closed")
+    time.sleep(1)
+    count_num = 0
+    save_num = 0
+    print(count_num)
+    ws = websocket.WebSocketApp(f"ws://{BATCAM_IP}/ws",
+                                on_open=on_open,
+                                on_message=on_message,
+                                on_error=on_error,
+                                on_close=on_close,
+                                subprotocols=["subscribe"],
+                                header={"Authorization": f"Basic %s" % base64EncodedAuth}
+                            )
+    Thread(target=ws.run_forever).start()
+    time.sleep(2)
+    count_num = 0
     ws.close()
     print("WebSocket Closed")
