@@ -59,9 +59,15 @@ def on_message(_, message):
 
 
 def on_error(_, error):
+    global count_num
+    count_num = 0 # reset count_num again when error
+
     print(error)
 
 def on_close(_, close_status_code, close_msg):
+    global count_num
+    count_num = 0 # reset count_num again at closing websocket
+
     print("### closed ###")
 
 '''
@@ -76,6 +82,10 @@ def on_close(_, close_status_code, close_msg):
 def on_open(socket):
     print("Opened connection")
     message = '{"type" : "subscribe", "id" : 3}'
+
+    global count_num
+    count_num = 0 # reset count_num again at opening websocket
+
     socket.send(message)
     print("Message sent")
 

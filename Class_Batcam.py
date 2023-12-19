@@ -273,7 +273,7 @@ class BatCam:
 
 
     # Leakage Detection (Deep Learning Model, Predict)
-    def leakage_detection(self):
+    def leakage_detection(self, folder_path):
         def extract_features_v4(file_path, window_size, stride):
             data = pd.read_csv(file_path)
             audio = data.values.reshape(-1)
@@ -366,7 +366,7 @@ class BatCam:
 
                 if BF_toggle != 0:
                     self.BF_data = self.save_BF()
-                    self.leakage_detection()
+                    # self.leakage_detection()
                     BF_toggle = 0
                     break
 

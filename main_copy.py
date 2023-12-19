@@ -94,6 +94,19 @@ class MainController:
                 elif Task == 2: # Collect BF data
                     print(f"Task {self.task} - subtask {Task} ongoing")
                     self.Batcam.rtsp_to_opencv(BF_toggle=1)
+
+                    os.chdir('/home/smi/FennecBotData/')
+                    date_time_now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                    data_folder = "TaskA_local_" + date_time_now
+                    os.makedirs(data_folder, exist_ok=True)
+                    task_a_path = '/home/smi/FennecBotData/' + data_folder
+                    os.chdir(task_a_path)
+
+                    self.Batcam.rtsp_to_opencv(BF_toggle=1)
+                    self.Batcam.leakage_detection(qr_path)
+
+                    os.chdir('/home/smi/FennecBot/')
+
                     Task = 0
                     self.task = 'B'
                     self.Pantilt.Turn(dir = 'front') # Batcam to front
@@ -133,9 +146,22 @@ class MainController:
                     
                     if self.Batcam.code_info == 'B':
                         Task = 2
+                
                 elif Task == 2: # Collect BF data94
                     print(f"Task {self.task} - subtask {Task} ongoing")
+
+                    os.chdir('/home/smi/FennecBotData/')
+                    date_time_now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                    data_folder = "TaskB_QR_" + date_time_now
+                    os.makedirs(data_folder, exist_ok=True)
+                    qr_path = '/home/smi/FennecBotData/' + data_folder
+                    os.chdir(qr_path)
+
                     self.Batcam.rtsp_to_opencv(BF_toggle=1)
+                    self.Batcam.leakage_detection(qr_path)
+
+                    os.chdir('/home/smi/FennecBot/')
+
                     Task = 0
                     self.task = 'C'
                     self.Pantilt.Turn(dir = 'front') # Batcam to front
@@ -154,6 +180,14 @@ class MainController:
                         
                 elif Task == 1: # Find target point by YOLO
                     print(f"Task {self.task} - subtask {Task} ongoing")
+
+                    os.chdir('/home/smi/FennecBotData/')
+                    date_time_now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                    data_folder = "TaskC_yolo_" + date_time_now
+                    os.makedirs(data_folder, exist_ok=True)
+                    yolo_path = '/home/smi/FennecBotData/' + data_folder
+                    os.chdir(yolo_path)
+
                     self.Batcam.rtsp_to_opencv(yolo_toggle=1)
 
                     results_length = len(self.Batcam.yolo_list)
@@ -176,6 +210,7 @@ class MainController:
                             self.Batcam.change_LPoint(indx)
 
                             self.Batcam.rtsp_to_opencv(BF_toggle=1) # save BF
+                            self.Batcam.leakage_detection(yolo_path) # leakage detection
 
                         else :
                             pre_x, pre_y = prev_x, prev_y
@@ -189,10 +224,12 @@ class MainController:
                             self.Batcam.change_LPoint(indx)
 
                             self.Batcam.rtsp_to_opencv(BF_toggle=1) # save BF
+                            self.Batcam.leakage_detection(yolo_path) # leakage detection
                         
                         prev_x = x_coordinate
                         prev_y = y_coordinate
                     
+                    os.chdir('/home/smi/FennecBot/')
                     Task = 0
                     self.task = 'D'
                     break
@@ -214,7 +251,7 @@ class MainController:
 
                     ##### FOR LPOINT CHANGING & FULL SCAN #####
                     date_time_now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                    data_folder = "Fullscan_" + date_time_now
+                    data_folder = "TaskD_fullscan_" + date_time_now
                     os.makedirs(data_folder, exist_ok=True)
                     os.chdir(data_folder) # move into data folder
                     
@@ -226,6 +263,7 @@ class MainController:
                         time.sleep(5)  # Adjust the delay as needed
 
                         self.Batcam.rtsp_to_opencv(BF_toggle=1)
+                        self.Batcam.leakage_detection(data_folder)
                         
                         lpt = point
                         Lmap_x, Lmap_y = self.Batcam.calc_l_map(lpt)
