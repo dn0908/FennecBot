@@ -19,7 +19,7 @@ from scipy import interpolate
 
 class MainController:
     def __init__(self):
-        self.task = 'D' # init task set to 'A'
+        self.task = 'C' # init task set to 'A'
         self.Scoutmini = ScoutMini()
         self.Realsense = RealSense()
         self.Pantilt = PanTilt()
