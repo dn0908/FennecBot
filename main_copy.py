@@ -267,7 +267,9 @@ class MainController:
                         
                         lpt = point
                         Lmap_x, Lmap_y = self.Batcam.calc_l_map(lpt)
-                        predicted_probability = self.Batcam.predicted_prob
+                        print(f"Calculated L map X, Y coordinates : ({Lmap_x}, {Lmap_y})")
+                        # predicted_probability = self.Batcam.predicted_prob
+                        noise_detection, predicted_probability = self.Batcam.leakage_detection(data_folder)
                         l_point_prob = {
                             "Lmap_x": Lmap_x,
                             "Lmap_y": Lmap_y,
