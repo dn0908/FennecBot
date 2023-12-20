@@ -263,18 +263,18 @@ class MainController:
                         time.sleep(5)  # Adjust the delay as needed
 
                         self.Batcam.rtsp_to_opencv(BF_toggle=1)
-                        self.Batcam.leakage_detection(data_folder)
                         
                         lpt = point
                         Lmap_x, Lmap_y = self.Batcam.calc_l_map(lpt)
                         print(f"Calculated L map X, Y coordinates : ({Lmap_x}, {Lmap_y})")
                         # predicted_probability = self.Batcam.predicted_prob
-                        noise_detection, predicted_probability = self.Batcam.leakage_detection(data_folder)
+                        noise_detection, predicted_probability = self.Batcam.leakage_detection()
                         l_point_prob = {
                             "Lmap_x": Lmap_x,
                             "Lmap_y": Lmap_y,
                             "probability": predicted_probability
                         }
+                        print(l_point_prob)
                         self.full_scan_data.append(l_point_prob)
                     
                     os.chdir('/home/smi/FennecBotData') # get out from data folder

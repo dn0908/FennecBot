@@ -228,12 +228,12 @@ class BatCam:
         lmap_y : 40x30 L point map Y coordinate (0 to 40)
 
         """
-        if lpt < 30:
+        if lpt < 40:
             lmap_y = 1
-            lmap_x = lpt
+            lmap_x = lpt + 1
 
-        elif lpt >= 30 :
-            lmap_x = lpt - (40*int(lpt/40))
+        elif lpt >= 40 :
+            lmap_x = (lpt - (40 * int(lpt/40))) + 1
             lmap_y = int(lpt/40) + 1
 
         return lmap_x, lmap_y
@@ -273,7 +273,7 @@ class BatCam:
 
 
     # Leakage Detection (Deep Learning Model, Predict)
-    def leakage_detection(self, folder_path):
+    def leakage_detection(self):
         def extract_features_v4(file_path, window_size, stride):
             data = pd.read_csv(file_path)
             audio = data.values.reshape(-1)
@@ -300,7 +300,7 @@ class BatCam:
             return features
 
         X_train = []
-        folder_path = '/home/smi/FennecBot/'
+        folder_path = '.'
         file_path = glob.glob(f'{folder_path}/*.csv')
         file_path = max(file_path, key= os.path.getmtime) # get the latest csv file
         print("✅ Loading Model..... Reading file", file_path)
