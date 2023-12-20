@@ -342,6 +342,10 @@ class BatCam:
 
         while True:
             ret, frame = cap.read()
+            if np.any(frame) == None :
+                print('frame NONE but continue')
+                pass
+            
             frame = cv2.resize(frame, (640, 480)) #resize cap for model input
 
             if not ret:

@@ -14,7 +14,8 @@ from Class_Batcam import *
 import datetime
 import os
 import matplotlib.pyplot as plt
-from scipy import interp2d
+import matplotlib.image as mpimg
+from scipy import interpolate
 
 class MainController:
     def __init__(self):
@@ -256,7 +257,7 @@ class MainController:
                     os.chdir(data_folder) # move into data folder
                     
                     # for point in range(1199): # for fullscan
-                    for point in range(0, 1200, 100): # for scan by index step 10
+                    for point in range(0, 1200, 70): # for scan by index step 10
                         print(f"Changing Listening Point to {point}")
                         self.Batcam.change_LPoint(point)
                         
@@ -292,8 +293,8 @@ class MainController:
                     file_path = glob.glob(f'{folder_path}/*.json')
                     file_path = max(file_path, key= os.path.getmtime) # get the latest json file
                     print("✅ Loading Data..... Reading file", file_path)
-                    with open(file_path, "r") as f:
-                        data = json.load(f)
+
+                    data = json.load(open(file_path))
 
                     # convert data to numpy
                     x = np.array([d["Lmap_x"] for d in data])
@@ -303,20 +304,25 @@ class MainController:
                     # Interpolation
                     x_new = np.linspace(1, 40, 40)
                     y_new = np.linspace(1, 30, 30)
-                    f = interp2d(x, y, p, kind="linear")
+                    f = interpolate.interp2d(x, y, p, kind="linear")
                     p_new = f(x_new, y_new)
 
-                    # Matplotlib으로 출력
+                    mapfilename = file_path.replace(".", "_")
+                    mapfilename = mapfilename + '.png'
+
                     def on_key_press(event):
                         if event.key == "q":
+                            mpimg.imsave(mapfilename, p_new, cmap='hsv')
                             plt.close()
-                            plt.savefig("output.png")
 
-                    plt.imshow(p_new, cmap="gray")
+                    plt.imshow(p_new, cmap="hsv")
                     plt.connect("key_press_event", on_key_press)
                     plt.show()
-                    
+                        
                     os.chdir('/home/smi/FennecBot')
+
+                    Task = 0
+                    self.task == 'E'
 
                     
             if self.task == 'E':
