@@ -316,18 +316,18 @@ class BatCam:
         y_pred_mean = np.mean(y_pred)
         # print("y_pred_mean : ", y_pred_mean)
 
-        if y_pred_mean == 0:
-            self.predicted_prob = float(np.mean(y_pred_prob[:, 0]))
-        elif y_pred_mean == 1:
-            self.predicted_prob = float(np.mean(y_pred_prob[:, 1]))
-        elif y_pred_mean == 2:
-            self.predicted_prob = float(np.mean(y_pred_prob[:, 2]))
+        prob_0 = float(np.mean(y_pred_prob[:, 0]))
+        prob_1 = float(np.mean(y_pred_prob[:, 1]))
+        prob_2 = float(np.mean(y_pred_prob[:, 2]))
 
-        if y_pred_mean >= 0.3 :      # if detected, self.noise_detection changes to 1
+        # current y_pred_mean thresh : 0.5
+        if y_pred_mean >= 0.5 :      # if detected, self.noise_detection changes to 1
             print('⚠ Leakage Detected ! @', file_path, 'score :', y_pred_mean)
+            self.predicted_prob = prob_1 + prob_2
             self.noise_detection = 1
         else :                       # if not, self.noise_detection remains 0
             print('NO Leakage Detected @', file_path)
+            self.predicted_prob = prob_0
             self.noise_detection = 0
         
         return self.noise_detection, self.predicted_prob
