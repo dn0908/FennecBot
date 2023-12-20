@@ -256,7 +256,7 @@ class MainController:
                     os.chdir(data_folder) # move into data folder
                     
                     # for point in range(1199): # for fullscan
-                    for point in range(0, 1200, 200): # for scan by index step 10
+                    for point in range(0, 1200, 100): # for scan by index step 10
                         print(f"Changing Listening Point to {point}")
                         self.Batcam.change_LPoint(point)
                         
@@ -266,8 +266,6 @@ class MainController:
                         
                         lpt = point
                         Lmap_x, Lmap_y = self.Batcam.calc_l_map(lpt)
-                        print(f"Calculated L map X, Y coordinates : ({Lmap_x}, {Lmap_y})")
-                        # predicted_probability = self.Batcam.predicted_prob
                         noise_detection, predicted_probability = self.Batcam.leakage_detection()
                         l_point_prob = {
                             "Lmap_x": Lmap_x,
@@ -287,8 +285,8 @@ class MainController:
                     ############################################
                     Task = 2
                     
-                elif Task == 2: # plot fullscan overlay map
 
+                elif Task == 2: # plot fullscan overlay map
                     # read json
                     folder_path = '/home/smi/FennecBotData/'
                     file_path = glob.glob(f'{folder_path}/*.json')
@@ -315,7 +313,6 @@ class MainController:
                             else:
                                 # interpolate
                                 img[i, j] = (img[i-1, j] + img[i+1, j] + img[i, j-1] + img[i, j+1]) / 4
-
                     img = int(img*255) # convert to pixel val
 
                     img_file = file_path - ".json"
