@@ -104,7 +104,7 @@ class MainController:
                     os.chdir(task_a_path)
 
                     self.Batcam.rtsp_to_opencv(BF_toggle=1)
-                    self.Batcam.leakage_detection(qr_path)
+                    det_result, det_prob = self.Batcam.leakage_detection()
 
                     os.chdir('/home/smi/FennecBot/')
 
@@ -159,7 +159,7 @@ class MainController:
                     os.chdir(qr_path)
 
                     self.Batcam.rtsp_to_opencv(BF_toggle=1)
-                    self.Batcam.leakage_detection(qr_path)
+                    det_result, det_prob = self.Batcam.leakage_detection()
 
                     os.chdir('/home/smi/FennecBot/')
 
@@ -211,7 +211,7 @@ class MainController:
                             self.Batcam.change_LPoint(indx)
 
                             self.Batcam.rtsp_to_opencv(BF_toggle=1) # save BF
-                            self.Batcam.leakage_detection(yolo_path) # leakage detection
+                            det_result, det_prob = self.Batcam.leakage_detection() # leakage detection
 
                         else :
                             pre_x, pre_y = prev_x, prev_y
@@ -225,7 +225,7 @@ class MainController:
                             self.Batcam.change_LPoint(indx)
 
                             self.Batcam.rtsp_to_opencv(BF_toggle=1) # save BF
-                            self.Batcam.leakage_detection(yolo_path) # leakage detection
+                            det_result, det_prob = self.Batcam.leakage_detection() # leakage detection
                         
                         prev_x = x_coordinate
                         prev_y = y_coordinate
@@ -334,6 +334,7 @@ class MainController:
                         self.Scoutmini.move(0, 0)
                         # self.Pantilt.MotorController(pan_angle= 0, tilt_angle= 0)
                         Task = 1
+                
                 elif Task == 1:
                     pass
 
