@@ -13,8 +13,8 @@ from Class_PanTilt import *
 from Class_Batcam import *
 import datetime
 import os
-
-
+import matplotlib.pyplot as plt
+from scipy import interp2d
 
 class MainController:
     def __init__(self):
@@ -300,28 +300,22 @@ class MainController:
                     y = np.array([d["Lmap_y"] for d in data])
                     p = np.array([d["probability"] for d in data])
 
-                    # convert x, y coord to 40x30 pixel img
-                    img = np.full((30, 40), 0)
-                    for i, j in zip(x, y):
-                        img[j-1, i-1] = p[i-1]
+                    # Interpolation
+                    x_new = np.linspace(1, 40, 40)
+                    y_new = np.linspace(1, 30, 30)
+                    f = interp2d(x, y, p, kind="linear")
+                    p_new = f(x_new, y_new)
 
-                    # if no data -> interpolate
-                    for i in range(30):
-                        for j in range(40):
-                            if i == 0 or j == 0 or i == 29 or j == 39:
-                                continue
-                            else:
-                                # interpolate
-                                img[i, j] = (img[i-1, j] + img[i+1, j] + img[i, j-1] + img[i, j+1]) / 4
-                    img = int(img*255) # convert to pixel val
+                    # Matplotlib으로 출력
+                    def on_key_press(event):
+                        if event.key == "q":
+                            plt.close()
+                            plt.savefig("output.png")
 
-                    img_file = file_path - ".json"
-                    img_file = img_file + ".png"
-                    # imshow img
-                    cv2.imshow("Full scan data", img)
-                    os.chdir('/home/smi/FennecBotData')
-                    cv2.imwrite(img_file, img)
-                    cv2.waitkey(0)
+                    plt.imshow(p_new, cmap="gray")
+                    plt.connect("key_press_event", on_key_press)
+                    plt.show()
+                    
                     os.chdir('/home/smi/FennecBot')
 
                     
